@@ -14,6 +14,8 @@
 
 package ch.vvingolds.xsdiff.app;
 
+import javax.xml.namespace.QName;
+
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 
@@ -42,15 +44,6 @@ public class NodeToString {
         return String.valueOf( node );
     }
 
-    public String printNodeParentInfo( Node node ) {
-        Node parentNode = node.getParentNode();
-        if( parentNode == null ) {
-            return "(no parent node)";
-        }
-
-        return "<"+parentNode.getNodeName() + " " + printAttributes( parentNode.getAttributes() ) +">";
-    }
-
     private String printAttributes( NamedNodeMap attributes ) {
         if( attributes == null || attributes.getLength() == 0 ) {
             return ""; // nothing
@@ -63,16 +56,44 @@ public class NodeToString {
         return b.toString();
     }
 
-    public String printNodeWithParentInfo( Node parentNode, String parentXpath ) {
-        StringBuilder b = new StringBuilder();
-        b.append( printNodeParentInfo( parentNode ) );
-        if( XmlDomUtils.xpathDepth( parentXpath )  < 2 ) {
-            return b.append( "." ).toString();
+    public String printNodeParentInfo( Node node ) {
+        Node parentNode = node.getParentNode();
+        if( parentNode == null ) {
+            return "(no parent node)";
         }
 
-        return b.append( "\n    " )
+        if( parentNode.getOwnerDocument() == null ) {
+            return "(attached to root)";
+        }
+
+        return printNodeSignature( parentNode );
+    }
+
+    public String printNodeSignature( Node node ) {
+        return "<"+node.getNodeName() + " " + printAttributes( node.getAttributes() ) +">";
+    }
+
+
+    public String printNodeWithParentInfo( Node parentNode, String parentXpath ) {
+        StringBuilder b = new StringBuilder();
+        if( XmlDomUtils.xpathDepth( parentXpath )  < 2 ) {
+            b.append( "<-- " ).append( printNodeParentInfo( parentNode ) );
+            return b.append( parentXpath ).append( ". -->" ).toString();
+        }
+
+        b.append( printNodeParentInfo( parentNode ) );
+        return b.append( "\n        " )
                 .append( nodeToString(parentNode ) ).append( "  <!-- by xpath: " ).append( parentXpath ).append( " -->" )
                 .toString();
+    }
+
+    public String attrToString( Node node, QName value ) {
+        if( Strings.isNullOrEmpty( value.getNamespaceURI() ) ) {
+            return String.valueOf( node.getAttributes().getNamedItem( value.getLocalPart() ) );
+        }
+        else {
+            return String.valueOf( node.getAttributes().getNamedItemNS( value.getNamespaceURI(), value.getLocalPart() ) );
+        }
     }
 
 }

@@ -14,9 +14,13 @@
 
 package ch.vvingolds.xsdiff.app;
 
+import javax.xml.namespace.QName;
+
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.xmlunit.diff.Comparison;
+import org.xmlunit.diff.Comparison.Detail;
+import org.xmlunit.diff.ComparisonType;
 import org.xmlunit.diff.Diff;
 import org.xmlunit.diff.Difference;
 
@@ -25,6 +29,14 @@ public class XmlSchemaDiffReport {
 
     private XmlDomUtils xmlDomUtils = new XmlDomUtils();
     private NodeToString printNode = new NodeToString();
+
+    private static boolean isAdded( final Comparison comparison ) {
+        return comparison.getControlDetails().getTarget() == null;
+    }
+
+    private static boolean isDeleted( final Comparison comparison ) {
+        return comparison.getTestDetails().getTarget() == null;
+    }
 
     public void runDiff( Document controlDoc, Document testDoc ) {
 
@@ -47,35 +59,59 @@ public class XmlSchemaDiffReport {
 
     private void printAddedNode( Document testDoc, final Comparison comparison ) {
         final Comparison.Detail details = comparison.getTestDetails();
-        System.out.println( "ADDED ; " + details.getXPath() + " ; " + printNode.nodeToString( details.getTarget() ) );
+        System.out.println( "ADDED <!-- xpath: " + details.getXPath() + " (parent node: "+details.getParentXPath()+" ) -->");
+        System.out.println( printNode.nodeToString( details.getTarget() ) );
         System.out.println( printNode.printNodeWithParentInfo( xmlDomUtils.findNode( testDoc, details.getParentXPath() ), details.getParentXPath() ) );
     }
 
     private void printDeletedNode( Document controlDoc, final Comparison comparison ) {
         final Comparison.Detail details = comparison.getControlDetails();
-        System.out.println( "DELETED ; " + details.getXPath() + " ; " + printNode.nodeToString( details.getTarget() ) );
+        System.out.println( "DELETED <!-- xpath: " + details.getXPath() + " (parent node: "+details.getParentXPath()+" ) -->\n" );
+        System.out.println( printNode.nodeToString( details.getTarget() ) );
         System.out.println( printNode.printNodeWithParentInfo( xmlDomUtils.findNode( controlDoc, details.getParentXPath() ), details.getParentXPath() ) );
     }
 
 
     private void printModifiedNode( Document testDoc, final Comparison comparison ) {
+
         final Comparison.Detail details = comparison.getControlDetails();
         if( XmlDomUtils.xpathDepth( details.getXPath() ) == 1 ) {
             System.out.println( "MODIFIED ; " + details.getXPath() + "." );
         }
         else {
-            System.out.println( "MODIFIED ; " + details.getXPath() + " = was: " + printNode.nodeToString( details.getTarget() ) + ", new value: " + printNode.nodeToString( comparison.getTestDetails().getTarget() ) );
-            Node parentNode = xmlDomUtils.findNode( testDoc, comparison.getTestDetails().getParentXPath() );
-            System.out.println( printNode.printNodeWithParentInfo( parentNode, details.getParentXPath() ) );
+            if( comparison.getType() == ComparisonType.CHILD_NODELIST_SEQUENCE ) {
+                System.out.println( ". node order different: " + comparison.getTestDetails().getXPath() );
+            }
+            else if( comparison.getType() == ComparisonType.CHILD_NODELIST_LENGTH ) {
+                int sizeControl = (int)comparison.getControlDetails().getValue();
+                int sizeTest = (int)comparison.getTestDetails().getValue();
+                if( sizeTest > sizeControl ) {
+                    System.out.println( String.format( ". %s node(s) added: %s <!-- %s -->", sizeTest - sizeControl, printNode.printNodeSignature( comparison.getTestDetails().getTarget() ), comparison.getTestDetails().getXPath() ) );
+                } else {
+                    System.out.println( String.format( ". %s node(s) removed: %s <!-- %s -->", sizeControl - sizeTest, printNode.printNodeSignature( comparison.getTestDetails().getTarget() ), comparison.getTestDetails().getXPath() ) );
+                }
+            } 
+            else if( comparison.getType() == ComparisonType.ATTR_NAME_LOOKUP ) {
+                printNewAttr( comparison.getTestDetails() );
+            }
+            else {
+                printNodeDiff( testDoc, comparison, details );
+            }
         }
     }
 
-    private static boolean isAdded( final Comparison comparison ) {
-        return comparison.getControlDetails().getTarget() == null;
+    /** only info about new attr value */
+    private void printNewAttr( final Detail detail ) {
+        System.out.println( "MODIFIED ; new attribute [" + printNode.attrToString( detail.getTarget(), (QName)detail.getValue() ) + "] <!-- xpath: " + detail.getXPath() + " -->" );
     }
 
-    private static boolean isDeleted( final Comparison comparison ) {
-        return comparison.getTestDetails().getTarget() == null;
+    private void printNodeDiff( Document testDoc, final Comparison comparison, final Comparison.Detail details ) {
+        System.out.println( "MODIFIED ; " + comparison.toString() + "\n" );
+        System.out.println( "- " + printNode.nodeToString( details.getTarget() ) );
+        System.out.println( "+ " + printNode.nodeToString( comparison.getTestDetails().getTarget() ) );
+   
+        Node parentNode = xmlDomUtils.findNode( testDoc, comparison.getTestDetails().getParentXPath() );
+        System.out.println( printNode.printNodeWithParentInfo( parentNode, details.getParentXPath() ) );
     }
 
 }

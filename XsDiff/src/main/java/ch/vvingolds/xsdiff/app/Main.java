@@ -19,6 +19,7 @@ import java.io.Reader;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
+import java.nio.file.Path;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.ParserConfigurationException;
@@ -30,6 +31,8 @@ import org.xml.sax.SAXException;
 /** entry point */
 public class Main {
 
+    protected static final String TESTDATA_FOLDER = "../testdata/";
+
     public static void main( final String[] args ) {
         new App().run();
     }
@@ -37,7 +40,6 @@ public class Main {
     /** app bootstrap */
     public static class App {
 
-        private static final String TESTDATA_FOLDER = "../testdata/";
         private XmlDomUtils xmlDomUtils = new XmlDomUtils();
 
         public void run() {
@@ -53,7 +55,16 @@ public class Main {
             }
         }
 
-        private void runDiff( final Reader file1, final Reader file2 ) {
+        public void runDiff( String folder1, String file1, String folder2, String file2 ) throws Exception {
+            FileSystem fs = FileSystems.getDefault();
+            Path f1 = fs.getPath( folder1, file1 );
+            Path f2 = fs.getPath( folder2, file2 );
+            System.out.println( "comparing: "+f1+" with "+f2 );
+            runDiff( Files.newBufferedReader( f1 ),
+                    Files.newBufferedReader( f2 ) );
+        }
+
+        public void runDiff( final Reader file1, final Reader file2 ) {
 
             try {
                 DocumentBuilder docBuilder = xmlDomUtils.documentBuilder();

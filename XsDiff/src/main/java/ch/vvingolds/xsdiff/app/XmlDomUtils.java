@@ -19,7 +19,11 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.TransformerFactoryConfigurationError;
+import javax.xml.transform.sax.SAXTransformerFactory;
+import javax.xml.transform.sax.TransformerHandler;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpressionException;
@@ -32,7 +36,7 @@ public class XmlDomUtils {
 
     private static final char XPATH_DELIMITER = '/';
 
-    private XPath xpath = createXPath();
+    private final XPath xpath = createXPath();
 
     /** get a namespace aware builder */
     public DocumentBuilder documentBuilder() throws ParserConfigurationException {
@@ -57,17 +61,17 @@ public class XmlDomUtils {
             }
             return node;
         }
-        catch( XPathExpressionException e ) {
+        catch( final XPathExpressionException e ) {
             throw new RuntimeException( "Failed to get node: [" + xpathExpr + "]", e );
         }
     }
 
-    public static long countChars( String testString, char match ) {
+    public static long countChars( final String testString, final char match ) {
         // CharMatcher.is('a').countIn("aaaab");
         return testString.codePoints().filter( ch -> ch == match ).count();
     }
 
-    public static long xpathDepth( String xpathExpr ) {
+    public static long xpathDepth( final String xpathExpr ) {
         return countChars( xpathExpr, XPATH_DELIMITER );
     }
 
@@ -78,15 +82,15 @@ public class XmlDomUtils {
     public static void setTransformerIndent( final Transformer transformer ) {
         try {
             transformer.setOutputProperty(XSLT_INDENT_PROP, "4");
-        } catch( IllegalArgumentException e ) {
+        } catch( final IllegalArgumentException e ) {
             System.err.println( "indent-amount not supported: {}"+ e.toString() ); // ignore error, don't print stack-trace
         }
     }
 
-    public static void setFactoryIndent( TransformerFactory tf ) {
+    public static void setFactoryIndent( final TransformerFactory tf ) {
         try {
             tf.setAttribute("indent-number", new Integer(2));
-        } catch( IllegalArgumentException e ) {
+        } catch( final IllegalArgumentException e ) {
             System.err.println( "indent-number not supported: {}"+ e.toString() ); // ignore error, don't print stack-trace
         }
     }
@@ -101,6 +105,37 @@ public class XmlDomUtils {
 
     public static void setUtfEncoding( final Transformer transformer ) {
         transformer.setOutputProperty( OutputKeys.ENCODING, "UTF-8" );
+    }
+
+    public static TransformerFactory transformerFactory() throws TransformerFactoryConfigurationError {
+        final TransformerFactory tf = TransformerFactory.newInstance();
+        XmlDomUtils.setFactoryIndent( tf );
+        return tf;
+    }
+
+    /** set up transformer to output a standalone "fragment" - suppressing xml declaration */
+    public static Transformer newFragmentTransformer( final TransformerFactory tf ) throws TransformerConfigurationException {
+        final Transformer transformer = tf.newTransformer();
+        XmlDomUtils.setUtfEncoding( transformer );
+        XmlDomUtils.setIndentFlag( transformer );
+        XmlDomUtils.outputStandaloneFragment( transformer );
+        return transformer;
+    }
+
+    public static SAXTransformerFactory saxTransformer() throws TransformerFactoryConfigurationError {
+        final SAXTransformerFactory tf = (SAXTransformerFactory) TransformerFactory.newInstance();
+        XmlDomUtils.setFactoryIndent( tf );
+        return tf;
+    }
+
+    /** set up transformer to output a standalone "fragment" - suppressing xml declaration */
+    public static TransformerHandler newFragmentTransformerHandler( final SAXTransformerFactory tf ) throws TransformerConfigurationException {
+        final TransformerHandler resultHandler = tf.newTransformerHandler();
+        final Transformer transformer = resultHandler.getTransformer();
+        XmlDomUtils.setUtfEncoding( transformer );
+        XmlDomUtils.setIndentFlag( transformer );
+        XmlDomUtils.outputStandaloneFragment( transformer );
+        return resultHandler;
     }
 
 }

@@ -18,8 +18,6 @@ import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
 
 import javax.xml.namespace.QName;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.sax.SAXTransformerFactory;
 import javax.xml.transform.sax.TransformerHandler;
 import javax.xml.transform.stream.StreamResult;
@@ -144,14 +142,9 @@ public class XmlSchemaDiffReport {
     private String daisyDiff( final String oldText, final String newText ) {
 
         try {
-            final SAXTransformerFactory tf = (SAXTransformerFactory) TransformerFactory.newInstance();
-            XmlDomUtils.setFactoryIndent( tf );
+            final SAXTransformerFactory tf = XmlDomUtils.saxTransformer();
 
-            final TransformerHandler resultHandler = tf.newTransformerHandler();
-            final Transformer transformer = resultHandler.getTransformer();
-            XmlDomUtils.setUtfEncoding( transformer );
-            XmlDomUtils.setIndentFlag( transformer );
-            XmlDomUtils.outputStandaloneFragment( transformer );
+            final TransformerHandler resultHandler = XmlDomUtils.newFragmentTransformerHandler( tf );
 
             final ByteArrayOutputStream bytes = new ByteArrayOutputStream();
             resultHandler.setResult(new StreamResult( bytes ));
@@ -164,5 +157,6 @@ public class XmlSchemaDiffReport {
             return "(failed to daisydiff: "+e+")";
         }
     }
+
 
 }

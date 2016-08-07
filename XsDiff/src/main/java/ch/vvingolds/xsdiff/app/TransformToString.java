@@ -16,7 +16,6 @@ package ch.vvingolds.xsdiff.app;
 
 import java.io.StringWriter;
 
-import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
@@ -30,12 +29,8 @@ public class TransformToString {
 
     public String nodeToString( final Node node ) {
         try {
-            TransformerFactory tf = TransformerFactory.newInstance();
-            XmlDomUtils.setFactoryIndent( tf );
-            final Transformer transformer = tf.newTransformer();
-            XmlDomUtils.setUtfEncoding( transformer );
-            XmlDomUtils.setIndentFlag( transformer );
-            XmlDomUtils.outputStandaloneFragment( transformer );
+            final TransformerFactory tf = XmlDomUtils.transformerFactory();
+            final Transformer transformer = XmlDomUtils.newFragmentTransformer( tf );
 
             final StringWriter stw = new StringWriter();
             transformer.transform( new DOMSource( node ), new StreamResult( stw ) );
@@ -44,7 +39,7 @@ public class TransformToString {
         catch( TransformerException | TransformerFactoryConfigurationError e ) {
             // TODO Auto-generated catch block
             e.printStackTrace();
-            return "{failed}";
+            return "{failed to serialize node "+node+"}";
         }
     }
 

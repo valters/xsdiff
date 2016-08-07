@@ -73,8 +73,14 @@ public class XmlSchemaDiffReport {
     private void printAddedNode( final Document testDoc, final Comparison comparison ) {
         final Comparison.Detail details = comparison.getTestDetails();
         output.write( "ADDED <!-- xpath: " + details.getXPath() + " (parent node: "+details.getParentXPath()+" ) -->");
-        output.writeLong( printNode.nodeToString( details.getTarget() ) );
-        output.writeLong( printNode.printNodeWithParentInfo( xmlDomUtils.findNode( testDoc, details.getParentXPath() ), details.getParentXPath() ) );
+
+        final String nodeText = printNode.nodeToString( xmlDomUtils.findNode( testDoc, details.getXPath() ) );
+        output.writeLong( nodeText );
+        output.newline();
+
+        final String parentText = printNode.printNodeWithParentInfo( xmlDomUtils.findNode( testDoc, details.getParentXPath() ), details.getParentXPath() );
+        output.writeLong( parentText );
+        output.markPartAdded( parentText, nodeText );
     }
 
     private void printDeletedNode( final Document controlDoc, final Comparison comparison ) {

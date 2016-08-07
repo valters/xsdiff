@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:NA0="http://vingolds.ch/xsd/2016/testing" xmlns:xs="http://www.w3.org/2001/XMLSchema" attributeFormDefault="unqualified" elementFormDefault="qualified" targetNamespace="http://vingolds.ch/xsd/2016/testing">
+
+<xs:complexType name="Complex_Type1">
+<xs:sequence>
+<xs:element minOccurs="0" name="field1" type="xs:string"/>
+<xs:element minOccurs="0" name="field2" type="NA0:MoneyOrNumberType"/>
+<xs:element minOccurs="0" name="field3" type="NA0:MoneyOrNumberType"/>
+<xs:element name="field4" type="xs:string"/>
+<xs:element name="field4b" type="xs:string"/>
+<xs:element minOccurs="0" name="field5" type="xs:int"/>
+</xs:sequence>
+<xs:attribute default="attr1v" name="attr1" type="xs:string" use="optional"/>
+<xs:attribute default="attr2v" name="attr2" type="xs:string" use="optional"/>
+<xs:attribute default="empty" name="state" type="NA0:FieldState" use="optional"/>
+<xs:attribute default="" name="version" type="xs:string" use="optional"/>
+</xs:complexType>
+</xs:schema>

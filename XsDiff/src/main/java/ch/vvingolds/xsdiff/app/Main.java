@@ -63,7 +63,8 @@ public class Main {
 
         public void run() {
             try {
-                runDiff( TESTDATA_FOLDER+"a/", TESTDATA_FOLDER+"b/", TESTDATA_FOLDER+"files.lst" );
+                runDiff( TESTDATA_FOLDER, "simple-seq-len1.xsd", TESTDATA_FOLDER, "simple-seq-len2.xsd" );
+                //runDiff( TESTDATA_FOLDER+"a/", TESTDATA_FOLDER+"b/", TESTDATA_FOLDER+"files.lst" );
                 System.out.println( "done" );
             }
             catch( final Exception e ) {

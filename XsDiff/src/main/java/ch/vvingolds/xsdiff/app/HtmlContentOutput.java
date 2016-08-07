@@ -16,29 +16,33 @@ package ch.vvingolds.xsdiff.app;
 
 import java.util.function.Consumer;
 
+import org.outerj.daisy.diff.output.TextDiffOutput;
+import org.outerj.daisy.diff.tag.TagSaxDiffOutput;
 import org.xml.sax.Attributes;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.AttributesImpl;
 
 /** provides couple helpers to make html writing easier */
-public class HtmlContentOutput {
+public class HtmlContentOutput implements TextDiffOutput {
 
     private final ContentHandler consumer;
+    private final TagSaxDiffOutput diffOutput;
 
     public HtmlContentOutput( final ContentHandler content ) {
         this.consumer = content;
+        this.diffOutput = new TagSaxDiffOutput( content );
     }
 
 
     public void write( final String str ) {
         try {
-        consumer.startElement( "", "p", "p", noattrs() );
+            consumer.startElement( "", "p", "p", noattrs() );
 
-        final char[] chars = str.toCharArray();
-        consumer.characters( chars, 0, chars.length );
+            final char[] chars = str.toCharArray();
+            consumer.characters( chars, 0, chars.length );
 
-        consumer.endElement( "", "p", "p" );
+            consumer.endElement( "", "p", "p" );
         }
         catch( final SAXException e ) {
             System.err.println( "Failed to write paragraph: " + str + ", exception occurred: " + e );
@@ -51,14 +55,10 @@ public class HtmlContentOutput {
         try {
             final char[] c = text.toCharArray();
 
-            final AttributesImpl noattrs = new AttributesImpl();
-
             for (int i = 0; i < c.length; i++) {
                 switch (c[i]) {
                 case '\n':
-                    consumer.startElement("", "br", "br", noattrs);
-                    consumer.endElement("", "br", "br");
-                    consumer.characters("\n".toCharArray(), 0, "\n".length());
+                    newline();
                     break;
                 default:
                     consumer.characters(c, i, 1);
@@ -71,7 +71,19 @@ public class HtmlContentOutput {
         }
     }
 
-    public Attributes noattrs() {
+    public void newline() {
+        try {
+            consumer.startElement("", "br", "br", noattrs() );
+            consumer.endElement("", "br", "br");
+            consumer.characters("\n".toCharArray(), 0, "\n".length());
+        }
+        catch( final SAXException e ) {
+            System.err.println( "Failed to write new line break, exception occurred: " + e );
+            e.printStackTrace();
+        }
+    }
+
+    public static Attributes noattrs() {
         return new AttributesImpl();
     }
 
@@ -85,5 +97,54 @@ public class HtmlContentOutput {
     public void handler( final Consumer<ContentHandler> block ) {
         block.accept( consumer );
     }
+
+
+    @Override
+    public void addClearPart( final String text ) throws Exception {
+        diffOutput.addClearPart( text );
+    }
+
+
+    @Override
+    public void addRemovedPart( final String text ) throws Exception {
+        diffOutput.addRemovedPart( text );
+    }
+
+
+    @Override
+    public void addAddedPart( final String text ) throws Exception {
+        diffOutput.addAddedPart( text );
+    }
+
+    public void markPartRemoved( final String text, final String removedPart ) {
+        try {
+            final int removeStarts = text.indexOf( removedPart );
+            final String clearPartBefore = text.substring( 0, removeStarts );
+            final String clearPartAfter = text.substring( removeStarts + removedPart.length(), text.length() );
+            addClearPart( clearPartBefore );
+            addRemovedPart( removedPart );
+            addClearPart( clearPartAfter );
+        }
+        catch( final Exception e ) {
+            System.err.println( "Failed to write removed paragraph: ["+removedPart+"] from [" + text + "], exception occurred: " + e );
+            e.printStackTrace();
+        }
+    }
+
+    public void markPartAdded( final String text, final String addedPart ) {
+        try {
+            final int removeStarts = text.indexOf( addedPart );
+            final String clearPartBefore = text.substring( 0, removeStarts );
+            final String clearPartAfter = text.substring( removeStarts + addedPart.length(), text.length() );
+            addClearPart( clearPartBefore );
+            addAddedPart( addedPart );
+            addClearPart( clearPartAfter );
+        }
+        catch( final Exception e ) {
+            System.err.println( "Failed to write added paragraph: ["+addedPart+"] from [" + text + "], exception occurred: " + e );
+            e.printStackTrace();
+        }
+    }
+
 
 }

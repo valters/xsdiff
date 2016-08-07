@@ -30,16 +30,24 @@ import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 
 import org.w3c.dom.Document;
+import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
 public class XmlDomUtils {
+
+    /** XML namespace declaration attribute */
+    private static final String ATTR_XMLNS = "xmlns";
+
+    /** delimiter between node name and ns prefix ("xs:element") */
+    private static final char NAMESPACE_PREFIX = ':';
 
     private static final char XPATH_DELIMITER = '/';
 
     private final XPath xpath = createXPath();
 
     /** get a namespace aware builder */
-    public DocumentBuilder documentBuilder() throws ParserConfigurationException {
+    public static DocumentBuilder documentBuilder() throws ParserConfigurationException {
         final DocumentBuilderFactory dbfac = DocumentBuilderFactory.newInstance();
         dbfac.setNamespaceAware( true );
         final DocumentBuilder docBuilder = dbfac.newDocumentBuilder();
@@ -47,7 +55,7 @@ public class XmlDomUtils {
     }
 
     /** make XPath with XMLSchema namespacing support */
-    public XPath createXPath() {
+    public static XPath createXPath() {
         final XPath xp = XPathFactory.newInstance().newXPath();
         xp.setNamespaceContext( new StaticNamespaceContext() );
         return xp;
@@ -115,9 +123,10 @@ public class XmlDomUtils {
     /** set up transformer to output a standalone "fragment" - suppressing xml declaration */
     public static Transformer newFragmentTransformer( final TransformerFactory tf ) throws TransformerConfigurationException {
         final Transformer transformer = tf.newTransformer();
-        XmlDomUtils.setUtfEncoding( transformer );
-        XmlDomUtils.setIndentFlag( transformer );
-        XmlDomUtils.outputStandaloneFragment( transformer );
+        setUtfEncoding( transformer );
+        setIndentFlag( transformer );
+        setTransformerIndent( transformer );
+        outputStandaloneFragment( transformer );
         return transformer;
     }
 
@@ -131,10 +140,52 @@ public class XmlDomUtils {
     public static TransformerHandler newFragmentTransformerHandler( final SAXTransformerFactory tf ) throws TransformerConfigurationException {
         final TransformerHandler resultHandler = tf.newTransformerHandler();
         final Transformer transformer = resultHandler.getTransformer();
-        XmlDomUtils.setUtfEncoding( transformer );
-        XmlDomUtils.setIndentFlag( transformer );
-        XmlDomUtils.outputStandaloneFragment( transformer );
+        setUtfEncoding( transformer );
+        setIndentFlag( transformer );
+        setTransformerIndent( transformer );
+        outputStandaloneFragment( transformer );
         return resultHandler;
+    }
+
+    /**
+     * Recursively strips the namespaces from a node.
+     * @param node the starting node.
+     */
+    public static Node removeNamespaceRecursive( final Node node, final Document document ) {
+        Node newNode = null;
+
+        if( node.getNodeType() == Node.ELEMENT_NODE ) {
+            newNode = document.renameNode( node, null, removeNsPrefix( node.getNodeName() ) );
+        }
+
+        final NodeList list = node.getChildNodes();
+        for( int i = 0; i < list.getLength(); ++i ) {
+            removeNamespaceRecursive( list.item( i ), document );
+        }
+
+        return newNode;
+    }
+
+    /** strip the namespace prefix from node name, if any. this avoid the Document strict validation error, that node should not have prefix when it does not the have associated namespace */
+    public static String removeNsPrefix( final String nodeName ) {
+        final int colonAt = nodeName.indexOf( NAMESPACE_PREFIX );
+        if( colonAt >= 0 ) {
+            return nodeName.substring( colonAt+1, nodeName.length() );
+        }
+
+        return nodeName;
+    }
+
+    /** remove stray "xmlns" default namespace element that seems to get left over even after removing namespacing from nodes */
+    public static void removeXmlNsAttribute( final Node node ) {
+        final NamedNodeMap attr = node.getAttributes();
+        for( int i = 0; i < attr.getLength(); i++ ) {
+            final Node item = attr.item( i );
+            if( ATTR_XMLNS.equals( item.getNodeName() ) ) {
+                attr.removeNamedItem( ATTR_XMLNS );
+                return;
+            }
+        }
     }
 
 }

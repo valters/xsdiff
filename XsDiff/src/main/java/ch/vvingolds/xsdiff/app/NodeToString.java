@@ -32,7 +32,7 @@ public class NodeToString {
     }
 
     public String nodeToString( final Node node ) {
-        final String str = trim( transform.nodeToString( node ) );
+        final String str = trim( transform.nodeToStringClean( node ) );
         if( ! Strings.isNullOrEmpty( str ) ) {
             return str;
         }
@@ -83,7 +83,7 @@ public class NodeToString {
 
         b.append( printNodeParentInfo( parentNode ) );
         return b.append( "\n        " )
-                .append( nodeToString(parentNode ) ).append( "  <!-- by xpath: " ).append( parentXpath ).append( " -->" )
+                .append( nodeToString( parentNode ) ).append( "  <!-- by xpath: " ).append( parentXpath ).append( " -->" )
                 .toString();
     }
 

@@ -15,7 +15,6 @@
 package ch.vvingolds.xsdiff.app;
 
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.nio.charset.StandardCharsets;
 
 import javax.xml.namespace.QName;
@@ -28,7 +27,6 @@ import javax.xml.transform.stream.StreamResult;
 import org.outerj.daisy.diff.DaisyDiff;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
-import org.xml.sax.ContentHandler;
 import org.xmlunit.diff.Comparison;
 import org.xmlunit.diff.Comparison.Detail;
 import org.xmlunit.diff.ComparisonType;
@@ -38,8 +36,8 @@ import org.xmlunit.diff.Difference;
 /** XML Schema (XSD) comparison/report generator */
 public class XmlSchemaDiffReport {
 
-    private XmlDomUtils xmlDomUtils = new XmlDomUtils();
-    private NodeToString printNode = new NodeToString();
+    private final XmlDomUtils xmlDomUtils = new XmlDomUtils();
+    private final NodeToString printNode = new NodeToString();
 
     private static boolean isAdded( final Comparison comparison ) {
         return comparison.getControlDetails().getTarget() == null;
@@ -49,7 +47,7 @@ public class XmlSchemaDiffReport {
         return comparison.getTestDetails().getTarget() == null;
     }
 
-    public void runDiff( Document controlDoc, Document testDoc ) {
+    public void runDiff( final Document controlDoc, final Document testDoc ) {
 
         final Diff xmlDiff = new XmlSchemaDiffBuilder().compare( controlDoc, testDoc );
 
@@ -68,14 +66,14 @@ public class XmlSchemaDiffReport {
         }
     }
 
-    private void printAddedNode( Document testDoc, final Comparison comparison ) {
+    private void printAddedNode( final Document testDoc, final Comparison comparison ) {
         final Comparison.Detail details = comparison.getTestDetails();
         System.out.println( "ADDED <!-- xpath: " + details.getXPath() + " (parent node: "+details.getParentXPath()+" ) -->");
         System.out.println( printNode.nodeToString( details.getTarget() ) );
         System.out.println( printNode.printNodeWithParentInfo( xmlDomUtils.findNode( testDoc, details.getParentXPath() ), details.getParentXPath() ) );
     }
 
-    private void printDeletedNode( Document controlDoc, final Comparison comparison ) {
+    private void printDeletedNode( final Document controlDoc, final Comparison comparison ) {
         final Comparison.Detail details = comparison.getControlDetails();
         System.out.println( "DELETED <!-- xpath: " + details.getXPath() + " (parent node: "+details.getParentXPath()+" ) -->\n" );
         System.out.println( printNode.nodeToString( details.getTarget() ) );
@@ -83,7 +81,7 @@ public class XmlSchemaDiffReport {
     }
 
 
-    private void printModifiedNode( Document testDoc, Document controlDoc, final Comparison comparison ) {
+    private void printModifiedNode( final Document testDoc, final Document controlDoc, final Comparison comparison ) {
 
         final Comparison.Detail details = comparison.getControlDetails();
         if( XmlDomUtils.xpathDepth( details.getXPath() ) == 1 ) {
@@ -94,8 +92,8 @@ public class XmlSchemaDiffReport {
                 System.out.println( ". node order different: " + comparison.getTestDetails().getXPath() );
             }
             else if( comparison.getType() == ComparisonType.CHILD_NODELIST_LENGTH ) {
-                int sizeControl = (int)comparison.getControlDetails().getValue();
-                int sizeTest = (int)comparison.getTestDetails().getValue();
+                final int sizeControl = (int)comparison.getControlDetails().getValue();
+                final int sizeTest = (int)comparison.getTestDetails().getValue();
                 if( sizeTest > sizeControl ) {
                     // nodes added
                     System.out.println( String.format( ". %s node(s) added: %s <!-- %s -->", sizeTest - sizeControl, printNode.printNodeSignature( comparison.getTestDetails().getTarget() ), comparison.getTestDetails().getXPath() ) );
@@ -113,7 +111,7 @@ public class XmlSchemaDiffReport {
                     System.out.println( "~" );
                 }
 
-            } 
+            }
             else if( comparison.getType() == ComparisonType.ATTR_NAME_LOOKUP ) {
                 printNewAttr( comparison.getTestDetails() );
             }
@@ -128,7 +126,7 @@ public class XmlSchemaDiffReport {
         System.out.println( "MODIFIED ; new attribute [" + printNode.attrToString( detail.getTarget(), (QName)detail.getValue() ) + "] <!-- xpath: " + detail.getXPath() + " -->" );
     }
 
-    private void printNodeDiff( Document testDoc, final Comparison comparison ) {
+    private void printNodeDiff( final Document testDoc, final Comparison comparison ) {
         System.out.println( "MODIFIED ; " + comparison.toString() + "\n" );
         final String oldText = printNode.nodeToString( comparison.getControlDetails().getTarget() );
         final String newText = printNode.nodeToString( comparison.getTestDetails().getTarget() );
@@ -139,7 +137,7 @@ public class XmlSchemaDiffReport {
         System.out.println( daisyDiff( oldText, newText) );
         System.out.println( "~" );
 
-        Node parentNode = xmlDomUtils.findNode( testDoc, comparison.getTestDetails().getParentXPath() );
+        final Node parentNode = xmlDomUtils.findNode( testDoc, comparison.getTestDetails().getParentXPath() );
         System.out.println( printNode.printNodeWithParentInfo( parentNode, comparison.getTestDetails().getParentXPath() ) );
     }
 
@@ -154,15 +152,15 @@ public class XmlSchemaDiffReport {
             XmlDomUtils.setUtfEncoding( transformer );
             XmlDomUtils.setIndentFlag( transformer );
             XmlDomUtils.outputStandaloneFragment( transformer );
-            
-            ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+
+            final ByteArrayOutputStream bytes = new ByteArrayOutputStream();
             resultHandler.setResult(new StreamResult( bytes ));
 
             DaisyDiff.diffTag( oldText, newText, resultHandler );
 
             return new String( bytes.toByteArray(), StandardCharsets.UTF_8 );
         }
-        catch( Exception e ) {
+        catch( final Exception e ) {
             return "(failed to daisydiff: "+e+")";
         }
     }

@@ -15,10 +15,12 @@
 package ch.vvingolds.xsdiff.app;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.function.Consumer;
 
 import org.ahocorasick.trie.Emit;
 import org.ahocorasick.trie.Trie;
+import org.ahocorasick.trie.Trie.TrieBuilder;
 import org.outerj.daisy.diff.output.TextDiffOutput;
 import org.outerj.daisy.diff.tag.TagSaxDiffOutput;
 import org.xml.sax.Attributes;
@@ -119,49 +121,71 @@ public class HtmlContentOutput implements TextDiffOutput {
         diffOutput.addAddedPart( text );
     }
 
-    public void markPartRemoved( final String text, final String removedPart ) {
+    public void markPartRemoved( final String text, final List<String> removedParts ) {
         try {
 
-            final Trie trie = Trie.builder()
-                    .removeOverlaps()
-                    .addKeyword(removedPart)
-                    .build();
-            final Collection<Emit> emits = trie.parseText( text );
+            final TrieBuilder trie = Trie.builder().removeOverlaps();
+            for( final String part : removedParts ) {
+                trie.addKeyword(part);
+            }
+            final Collection<Emit> emits = trie.build().parseText( text );
 
+            int prevFragment = 0;
             for( final Emit emit : emits ) {
-                final String clearPartBefore = text.substring( 0, emit.getStart() );
-                final String clearPartAfter = text.substring( emit.getEnd()+1, text.length() );
+                final String clearPartBefore = text.substring( prevFragment, emit.getStart() );
                 addClearPart( clearPartBefore );
                 addRemovedPart( emit.getKeyword() );
-                addClearPart( clearPartAfter );
+
+                prevFragment = emit.getEnd()+1;
             }
+
+            final String clearPartAfter = text.substring( prevFragment, text.length() );
+            addClearPart( clearPartAfter );
         }
         catch( final Exception e ) {
-            System.err.println( "Failed to write removed paragraph: ["+removedPart+"] from [" + text + "], exception occurred: " + e );
+            System.err.println( "Failed to write removed paragraph: ["+removedParts+"] from [" + text + "], exception occurred: " + e );
             e.printStackTrace();
         }
     }
 
-    public void markPartAdded( final String text, final String addedPart ) {
+    public void markPartAdded( final String text, final List<String> addedParts ) {
         try {
 
-            final Trie trie = Trie.builder()
-                    .removeOverlaps()
-                    .addKeyword(addedPart)
-                    .build();
-            final Collection<Emit> emits = trie.parseText( text );
+            final TrieBuilder trie = Trie.builder().removeOverlaps();
+            for( final String part : addedParts ) {
+                trie.addKeyword(part);
+            }
+            final Collection<Emit> emits = trie.build().parseText( text );
 
+            int prevFragment = 0;
             for( final Emit emit : emits ) {
-                final String clearPartBefore = text.substring( 0, emit.getStart() );
-                final String clearPartAfter = text.substring( emit.getEnd()+1, text.length() );
+                final String clearPartBefore = text.substring( prevFragment, emit.getStart() );
                 addClearPart( clearPartBefore );
                 addAddedPart( emit.getKeyword() );
-                addClearPart( clearPartAfter );
+
+                prevFragment = emit.getEnd()+1;
             }
+
+            final String clearPartAfter = text.substring( prevFragment, text.length() );
+            addClearPart( clearPartAfter );
         }
         catch( final Exception e ) {
-            System.err.println( "Failed to write added paragraph: ["+addedPart+"] from [" + text + "], exception occurred: " + e );
+            System.err.println( "Failed to write added paragraph: ["+addedParts+"] from [" + text + "], exception occurred: " + e );
             e.printStackTrace();
+        }
+    }
+
+
+    public void markChanges( final String xpath, final NodeChanges changes ) {
+
+        write( "<!-- " + xpath + "-->" );
+        if( ! changes.getAddedNodes().isEmpty() ) {
+            write( "! adds");
+            markPartAdded( changes.getParentNodeNext(), changes.getAddedNodes() );
+        }
+        if( ! changes.getRemovedNodes().isEmpty() ) {
+            write( "! removes");
+            markPartRemoved( changes.getParentNodeNext(), changes.getRemovedNodes() );
         }
     }
 

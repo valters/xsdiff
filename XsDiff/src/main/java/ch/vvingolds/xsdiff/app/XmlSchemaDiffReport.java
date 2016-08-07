@@ -16,6 +16,9 @@ package ch.vvingolds.xsdiff.app;
 
 import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 import javax.xml.namespace.QName;
 import javax.xml.transform.sax.SAXTransformerFactory;
@@ -32,12 +35,53 @@ import org.xmlunit.diff.ComparisonType;
 import org.xmlunit.diff.Diff;
 import org.xmlunit.diff.Difference;
 
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+
 /** XML Schema (XSD) comparison/report generator */
 public class XmlSchemaDiffReport {
 
     private final XmlDomUtils xmlDomUtils = new XmlDomUtils();
     private final NodeToString printNode = new NodeToString();
     private final HtmlContentOutput output;
+
+    private final Map<String, NodeChangesHolder> nodeChanges = Maps.newLinkedHashMap();
+
+    private static class NodeChangesHolder implements NodeChanges {
+        private final String parentNodeNext;
+
+        private final List<String> addedNodeText = Lists.newArrayList();
+
+        private final List<String> removedNodeText = Lists.newArrayList();
+
+        public NodeChangesHolder( final String parentNodeNext ) {
+            super();
+            this.parentNodeNext = parentNodeNext;
+        }
+
+        public void addedNode( final String nodeText ) {
+            addedNodeText.add( nodeText );
+        }
+
+        public void removedNode( final String nodeText ) {
+            removedNodeText.add( nodeText );
+        }
+
+        @Override
+        public String getParentNodeNext() {
+            return parentNodeNext;
+        }
+
+        @Override
+        public List<String> getAddedNodes() {
+            return addedNodeText;
+        }
+
+        @Override
+        public List<String> getRemovedNodes() {
+            return removedNodeText;
+        }
+    }
 
     public XmlSchemaDiffReport( final HtmlContentOutput output ) {
         this.output = output;
@@ -68,6 +112,15 @@ public class XmlSchemaDiffReport {
                 printModifiedNode( testDoc, controlDoc, comparison );
             }
         }
+
+        output.write( "++ ADDS ; REMOVES ++" );
+        printAddsAndRemoves();
+    }
+
+    private void printAddsAndRemoves() {
+        for( final Map.Entry<String, NodeChangesHolder> entry : nodeChanges.entrySet() ) {
+            output.markChanges( entry.getKey(), entry.getValue() );
+        }
     }
 
     private void printAddedNode( final Document testDoc, final Comparison comparison ) {
@@ -78,9 +131,34 @@ public class XmlSchemaDiffReport {
         output.writeLong( nodeText );
         output.newline();
 
-        final String parentText = printNode.printNodeWithParentInfo( xmlDomUtils.findNode( testDoc, details.getParentXPath() ), details.getParentXPath() );
-        output.writeLong( parentText );
-        output.markPartAdded( parentText, nodeText );
+        if( ! markNodeAdded( details.getParentXPath(), nodeText ) ) {
+            output.write( "! holder for "+  details.getParentXPath() + "did not exist(?)");
+            final String parentText = printNode.printNodeWithParentInfo( xmlDomUtils.findNode( testDoc, details.getParentXPath() ), details.getParentXPath() );
+            output.writeLong( parentText );
+            output.markPartAdded( parentText, Collections.singletonList( nodeText ) );
+        }
+    }
+
+    /** @return false, if change could not be posted (parent holder did not exist). caller should print change explicitly. */
+    private boolean markNodeAdded( final String parentXPath, final String nodeText ) {
+        final NodeChangesHolder changeHolder = nodeChanges.get( parentXPath );
+        if( changeHolder == null ) {
+            return false;
+        }
+
+        changeHolder.addedNode( nodeText );
+        return true;
+    }
+
+    /** @return false, if change could not be posted (parent holder did not exist). caller should print change explicitly. */
+    private boolean markNodeRemoved( final String parentXPath, final String nodeText ) {
+        final NodeChangesHolder changeHolder = nodeChanges.get( parentXPath );
+        if( changeHolder == null ) {
+            return false;
+        }
+
+        changeHolder.removedNode( nodeText );
+        return true;
     }
 
     private void printDeletedNode( final Document controlDoc, final Comparison comparison ) {
@@ -91,9 +169,12 @@ public class XmlSchemaDiffReport {
         output.writeLong( nodeText );
         output.newline();
 
-        final String parentText = printNode.printNodeWithParentInfo( xmlDomUtils.findNode( controlDoc, details.getParentXPath() ), details.getParentXPath() );
-        output.writeLong( parentText );
-        output.markPartRemoved( parentText, nodeText );
+        if( ! markNodeRemoved( details.getParentXPath(), nodeText ) ) {
+            output.write( "! holder for "+  details.getParentXPath() + "did not exist(?)");
+            final String parentText = printNode.printNodeWithParentInfo( xmlDomUtils.findNode( controlDoc, details.getParentXPath() ), details.getParentXPath() );
+            output.writeLong( parentText );
+            output.markPartRemoved( parentText, Collections.singletonList( nodeText ) );
+        }
     }
 
 
@@ -108,18 +189,23 @@ public class XmlSchemaDiffReport {
                 output.write( ". node order different: " + comparison.getTestDetails().getXPath() );
             }
             else if( comparison.getType() == ComparisonType.CHILD_NODELIST_LENGTH ) {
+                final long xpathDepth = XmlDomUtils.xpathDepth( details.getXPath() );
+                final boolean shouldTakeParent = xpathDepth > 2;
+
                 final int sizeControl = (int)comparison.getControlDetails().getValue();
                 final int sizeTest = (int)comparison.getTestDetails().getValue();
                 if( sizeTest > sizeControl ) {
                     // nodes added
                     output.write( String.format( ". %s node(s) added: %s <!-- %s -->", sizeTest - sizeControl, printNode.printNodeSignature( comparison.getTestDetails().getTarget() ), comparison.getTestDetails().getXPath() ) );
+                    addChangeHolder( comparison.getTestDetails().getXPath(), holderNodeText( testDoc, comparison.getTestDetails() ) );
                 }
                 else {
                     // nodes removed
                     output.write( String.format( ". %s node(s) removed: %s <!-- %s -->", sizeControl - sizeTest, printNode.printNodeSignature( comparison.getTestDetails().getTarget() ), comparison.getTestDetails().getXPath() ) );
+                    addChangeHolder( comparison.getControlDetails().getXPath(), holderNodeText( controlDoc, comparison.getControlDetails() ) );
                 }
 
-                if( XmlDomUtils.xpathDepth( details.getXPath() ) > 2 ) {
+                if( shouldTakeParent ) {
                     final String oldText = printNode.nodeToString( xmlDomUtils.findNode( controlDoc, comparison.getControlDetails().getParentXPath() ) );
                     final String newText = printNode.nodeToString( xmlDomUtils.findNode( testDoc, comparison.getTestDetails().getParentXPath() ) );
                     output.write( "~" );
@@ -135,6 +221,23 @@ public class XmlSchemaDiffReport {
                 printNodeDiff( testDoc, comparison );
             }
         }
+    }
+
+    private void addChangeHolder( final String xpathExpr, final String nodeText ) {
+        if( nodeChanges.containsKey(  xpathExpr ) ) {
+            return; // do nothing
+        }
+
+        nodeChanges.put( xpathExpr, new NodeChangesHolder( nodeText ) );
+    }
+
+    /** this one is clever enough to expand node text up to parent node scope, to provide interesting context when changes are printed */
+    private String holderNodeText( final Document doc, final Detail details ) {
+        final long xpathDepth = XmlDomUtils.xpathDepth( details.getXPath() );
+        final boolean shouldTakeParent = xpathDepth > 2;
+        final String xpathExpr = shouldTakeParent ? details.getParentXPath() : details.getXPath();
+        final String nodeText = printNode.nodeToString( xmlDomUtils.findNode( doc, xpathExpr ) );
+        return nodeText;
     }
 
     /** only info about new attr value */

@@ -67,7 +67,6 @@ public class XmlDomUtils {
     }
 
     public static long countChars( final String testString, final char match ) {
-        // CharMatcher.is('a').countIn("aaaab");
         return testString.codePoints().filter( ch -> ch == match ).count();
     }
 
@@ -122,7 +121,7 @@ public class XmlDomUtils {
         return transformer;
     }
 
-    public static SAXTransformerFactory saxTransformer() throws TransformerFactoryConfigurationError {
+    public static SAXTransformerFactory saxTransformerFactory() throws TransformerFactoryConfigurationError {
         final SAXTransformerFactory tf = (SAXTransformerFactory) TransformerFactory.newInstance();
         XmlDomUtils.setFactoryIndent( tf );
         return tf;

@@ -14,6 +14,8 @@
 
 package ch.vvingolds.xsdiff.app;
 
+import java.util.function.Consumer;
+
 import org.xml.sax.Attributes;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
@@ -77,6 +79,11 @@ public class HtmlContentOutput {
     /** for straight-through write */
     public ContentHandler getHandler() {
         return consumer;
+    }
+
+    /** invoke lambda function on self: contentOutput.handler( content -> content.doSomething() ); */
+    public void handler( final Consumer<ContentHandler> block ) {
+        block.accept( consumer );
     }
 
 }

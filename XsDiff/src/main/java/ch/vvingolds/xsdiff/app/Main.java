@@ -14,6 +14,7 @@
 
 package ch.vvingolds.xsdiff.app;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.Reader;
@@ -21,6 +22,9 @@ import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.ParserConfigurationException;
@@ -47,11 +51,19 @@ public class Main {
     /** app bootstrap */
     public static class App {
 
+        /** how to convert the xml to HTML */
+        private static final String HTML_TRANSFORMATION_XSL = "xslfilter/tagheader-xsdiff.xsl";
+
+        /** XSL looks for diffreport/diff/node() */
+        private static final String XSL_PLACEHOLDER = "diffreport";
+        /** XSL looks for diffreport/diff/node() */
+        private static final String XSL_DIFF_PLACEHOLDER = "diff";
+
         private final XmlDomUtils xmlDomUtils = new XmlDomUtils();
 
         public void run() {
             try {
-                runDiff( TESTDATA_FOLDER, "simple-seq-len1.xsd", TESTDATA_FOLDER, "simple-seq-len2.xsd" );
+                runDiff( TESTDATA_FOLDER+"a/", TESTDATA_FOLDER+"b/", TESTDATA_FOLDER+"files.lst" );
                 System.out.println( "done" );
             }
             catch( final Exception e ) {
@@ -60,8 +72,65 @@ public class Main {
             }
         }
 
+        /** run diff on single file pair */
         public void runDiff( final String folder1, final String file1, final String folder2, final String file2 ) throws Exception {
 
+
+            final FileSystem fs = FileSystems.getDefault();
+            final Path f1 = fs.getPath( folder1, file1 );
+            final Path f2 = fs.getPath( folder2, file2 );
+
+            final HtmlContentOutput contentOutput = startOutput();
+            contentOutput.write( "comparing: "+f1+" with "+f2 );
+
+            runDiff( Files.newBufferedReader( f1 ),
+                    Files.newBufferedReader( f2 ),
+                    contentOutput );
+
+            finishOutput( contentOutput.getHandler() );
+
+        }
+
+        /** run diff on two folders, with a listing file */
+        public void runDiff( final String folder1, final String folder2, final String listFilesToCompare ) throws Exception {
+
+            final List<String> fileList = collectLines( listFilesToCompare );
+
+            final HtmlContentOutput contentOutput = startOutput();
+
+            for( final String fileName : fileList ) {
+                System.out.println( "compare: " + fileName );
+
+                final FileSystem fs = FileSystems.getDefault();
+                final Path f1 = fs.getPath( folder1, fileName );
+                final Path f2 = fs.getPath( folder2, fileName );
+
+                contentOutput.write( "comparing: "+f1+" with "+f2 );
+
+                runDiff( Files.newBufferedReader( f1 ),
+                        Files.newBufferedReader( f2 ),
+                        contentOutput );
+            }
+
+            finishOutput( contentOutput.getHandler() );
+        }
+
+        public List<String> collectLines( final String listFilesToCompare ) {
+            try( final BufferedReader br = Files.newBufferedReader( Paths.get( listFilesToCompare ) ) ) {
+                return br.lines().collect( Collectors.toList() );
+            }
+            catch( final IOException e ) {
+                throw new RuntimeException( "Failed to read listing file: " + e, e );
+            }
+        }
+
+        public void finishOutput( final ContentHandler content ) throws Exception {
+            content.endElement("", XSL_DIFF_PLACEHOLDER, XSL_DIFF_PLACEHOLDER);
+            content.endElement("", XSL_PLACEHOLDER, XSL_PLACEHOLDER);
+            content.endDocument();
+        }
+
+        public HtmlContentOutput startOutput() throws Exception {
             final SAXTransformerFactory tf = XmlDomUtils.saxTransformerFactory();
 
             final TransformerHandler result = XmlDomUtils.newFragmentTransformerHandler( tf );
@@ -69,28 +138,14 @@ public class Main {
             result.setResult(new StreamResult(new File(outputFile)));
 
             final XslFilter filter = new XslFilter();
-            final ContentHandler content = filter.xsl(result, "xslfilter/tagheader-xsdiff.xsl");
+            final ContentHandler content = filter.xsl(result, HTML_TRANSFORMATION_XSL);
 
             content.startDocument();
-            content.startElement("", "diffreport", "diffreport", new AttributesImpl());
-            content.startElement("", "diff", "diff", new AttributesImpl());
+            content.startElement("", XSL_PLACEHOLDER, XSL_PLACEHOLDER, new AttributesImpl());
+            content.startElement("", XSL_DIFF_PLACEHOLDER, XSL_DIFF_PLACEHOLDER, new AttributesImpl());
 
             final HtmlContentOutput contentOutput = new HtmlContentOutput( content );
-
-            final FileSystem fs = FileSystems.getDefault();
-            final Path f1 = fs.getPath( folder1, file1 );
-            final Path f2 = fs.getPath( folder2, file2 );
-
-            contentOutput.write( "comparing: "+f1+" with "+f2 );
-
-            runDiff( Files.newBufferedReader( f1 ),
-                    Files.newBufferedReader( f2 ),
-                    contentOutput );
-
-            content.endElement("", "diff", "diff");
-            content.endElement("", "diffreport", "diffreport");
-            content.endDocument();
-
+            return contentOutput;
         }
 
         public void runDiff( final Reader file1, final Reader file2, final HtmlContentOutput output ) {

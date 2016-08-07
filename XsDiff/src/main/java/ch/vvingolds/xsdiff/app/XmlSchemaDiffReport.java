@@ -37,9 +37,9 @@ public class XmlSchemaDiffReport {
 
     private final XmlDomUtils xmlDomUtils = new XmlDomUtils();
     private final NodeToString printNode = new NodeToString();
-    private final ContentHtmlOutput output;
+    private final HtmlContentOutput output;
 
-    public XmlSchemaDiffReport( final ContentHtmlOutput output ) {
+    public XmlSchemaDiffReport( final HtmlContentOutput output ) {
         this.output = output;
     }
 

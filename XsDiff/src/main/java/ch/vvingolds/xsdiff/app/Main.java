@@ -51,7 +51,8 @@ public class Main {
 
         public void run() {
             try {
-                runDiff( TESTDATA_FOLDER, "simple-schema1.xsd", TESTDATA_FOLDER, "simple-schema2.xsd" );
+                runDiff( TESTDATA_FOLDER, "simple-seq-len1.xsd", TESTDATA_FOLDER, "simple-seq-len2.xsd" );
+                System.out.println( "done" );
             }
             catch( final Exception e ) {
                 System.out.println("Error, failed to run, exception occurred: " + e );
@@ -68,13 +69,13 @@ public class Main {
             result.setResult(new StreamResult(new File(outputFile)));
 
             final XslFilter filter = new XslFilter();
-            final ContentHandler content = filter.xsl(result, "xslfilter/tagheader.xsl");
+            final ContentHandler content = filter.xsl(result, "xslfilter/tagheader-xsdiff.xsl");
 
             content.startDocument();
             content.startElement("", "diffreport", "diffreport", new AttributesImpl());
             content.startElement("", "diff", "diff", new AttributesImpl());
 
-            final ContentHtmlOutput contentOutput = new ContentHtmlOutput( content );
+            final HtmlContentOutput contentOutput = new HtmlContentOutput( content );
 
             final FileSystem fs = FileSystems.getDefault();
             final Path f1 = fs.getPath( folder1, file1 );
@@ -92,7 +93,7 @@ public class Main {
 
         }
 
-        public void runDiff( final Reader file1, final Reader file2, final ContentHtmlOutput output ) {
+        public void runDiff( final Reader file1, final Reader file2, final HtmlContentOutput output ) {
 
             try {
 

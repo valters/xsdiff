@@ -24,15 +24,15 @@ import com.google.common.base.Strings;
 
 public class NodeToString {
 
-    private TransformToString transform = new TransformToString();
+    private final TransformToString transform = new TransformToString();
 
     /** remove all possible (invisible) whitespace: including line breaks. used to see if document is actually empty and alternative printer should be used. */
-    public String trim( String str ) {
+    public String trim( final String str ) {
         return CharMatcher.invisible().trimFrom( Strings.nullToEmpty( str ) );
     }
 
     public String nodeToString( final Node node ) {
-        String str = trim( transform.nodeToString( node ) );
+        final String str = trim( transform.nodeToString( node ) );
         if( ! Strings.isNullOrEmpty( str ) ) {
             return str;
         }
@@ -41,23 +41,23 @@ public class NodeToString {
 
     /** simple print when clever fails */
     private String altPrint( final Node node ) {
-        return String.valueOf( node );
+        return "<span>"+String.valueOf( node )+"</span>";
     }
 
-    private String printAttributes( NamedNodeMap attributes ) {
+    private String printAttributes( final NamedNodeMap attributes ) {
         if( attributes == null || attributes.getLength() == 0 ) {
             return ""; // nothing
         }
 
-        StringBuilder b = new StringBuilder();
+        final StringBuilder b = new StringBuilder();
         for( int i = 0; i < attributes.getLength(); i++ ) {
             b.append( "@" ).append( attributes.item( i ) );
         }
         return b.toString();
     }
 
-    public String printNodeParentInfo( Node node ) {
-        Node parentNode = node.getParentNode();
+    public String printNodeParentInfo( final Node node ) {
+        final Node parentNode = node.getParentNode();
         if( parentNode == null ) {
             return "(no parent node)";
         }
@@ -69,13 +69,13 @@ public class NodeToString {
         return printNodeSignature( parentNode );
     }
 
-    public String printNodeSignature( Node node ) {
+    public String printNodeSignature( final Node node ) {
         return "<"+node.getNodeName() + " " + printAttributes( node.getAttributes() ) +">";
     }
 
 
-    public String printNodeWithParentInfo( Node parentNode, String parentXpath ) {
-        StringBuilder b = new StringBuilder();
+    public String printNodeWithParentInfo( final Node parentNode, final String parentXpath ) {
+        final StringBuilder b = new StringBuilder();
         if( XmlDomUtils.xpathDepth( parentXpath )  < 2 ) {
             b.append( "<-- " ).append( printNodeParentInfo( parentNode ) );
             return b.append( parentXpath ).append( ". -->" ).toString();
@@ -87,7 +87,7 @@ public class NodeToString {
                 .toString();
     }
 
-    public String attrToString( Node node, QName value ) {
+    public String attrToString( final Node node, final QName value ) {
         if( Strings.isNullOrEmpty( value.getNamespaceURI() ) ) {
             return String.valueOf( node.getAttributes().getNamedItem( value.getLocalPart() ) );
         }

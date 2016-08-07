@@ -105,8 +105,14 @@ public class HtmlContentOutput implements TextDiffOutput {
 
 
     @Override
-    public void addClearPart( final String text ) throws Exception {
-        diffOutput.addClearPart( text );
+    public void addClearPart( final String text ) {
+        try {
+            diffOutput.addClearPart( text );
+        }
+        catch( final Exception e ) {
+            System.err.println( "Failed to write added text: [" + text + "], exception occurred: " + e );
+            e.printStackTrace();
+        }
     }
 
 

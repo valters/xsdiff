@@ -43,11 +43,8 @@ public class Main {
         private XmlDomUtils xmlDomUtils = new XmlDomUtils();
 
         public void run() {
-            //runDiff( "TL-33/GB_TL.schema.xsd", "TL-33/GB_TL.schema2.xsd" );
             try {
-                FileSystem fs = FileSystems.getDefault();
-                runDiff( Files.newBufferedReader( fs.getPath( TESTDATA_FOLDER, "simple-schema1.xsd" ) ),
-                        Files.newBufferedReader( fs.getPath( TESTDATA_FOLDER, "simple-schema2.xsd" ) ) );
+                runDiff( TESTDATA_FOLDER, "simple-schema1.xsd", TESTDATA_FOLDER, "simple-schema2.xsd" );
             }
             catch( Exception e ) {
                 System.out.println("Error, failed to run, exception occurred: " + e );

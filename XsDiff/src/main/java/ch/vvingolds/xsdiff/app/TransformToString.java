@@ -28,26 +28,14 @@ import org.w3c.dom.Node;
 
 public class TransformToString {
 
-    /** ask to pretty-print XML (indentation) */
-    public static final String XSLT_INDENT_PROP = "{http://xml.apache.org/xslt}indent-amount";
-
-    /** ask transformer to pretty-print the output: works with Java built-in XML engine */
-    public void setTransformerIndent( final Transformer transformer ) {
-        try {
-            transformer.setOutputProperty(XSLT_INDENT_PROP, "4");
-        } catch( IllegalArgumentException e ) {
-            System.err.println( "indent-amount not supported: {}"+ e.toString() ); // ignore error, don't print stack-trace
-        }
-    }
-
     public String nodeToString( final Node node ) {
         try {
             TransformerFactory tf = TransformerFactory.newInstance();
-            tf.setAttribute("indent-number", new Integer(2));
+            XmlDomUtils.setFactoryIndent( tf );
             final Transformer transformer = tf.newTransformer();
-            transformer.setOutputProperty( OutputKeys.OMIT_XML_DECLARATION, "yes" );
-            transformer.setOutputProperty( OutputKeys.INDENT, "yes" ); // see http://www.w3.org/TR/xslt#output
-            transformer.setOutputProperty( OutputKeys.ENCODING, "UTF-8" );
+            XmlDomUtils.setUtfEncoding( transformer );
+            XmlDomUtils.setIndentFlag( transformer );
+            XmlDomUtils.outputStandaloneFragment( transformer );
 
             final StringWriter stw = new StringWriter();
             transformer.transform( new DOMSource( node ), new StreamResult( stw ) );

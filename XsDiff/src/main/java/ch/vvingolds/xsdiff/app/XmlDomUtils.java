@@ -17,6 +17,9 @@ package ch.vvingolds.xsdiff.app;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpressionException;
@@ -67,4 +70,37 @@ public class XmlDomUtils {
     public static long xpathDepth( String xpathExpr ) {
         return countChars( xpathExpr, XPATH_DELIMITER );
     }
+
+    /** ask to pretty-print XML (indentation) */
+    public static final String XSLT_INDENT_PROP = "{http://xml.apache.org/xslt}indent-amount";
+
+    /** ask transformer to pretty-print the output: works with Java built-in XML engine */
+    public static void setTransformerIndent( final Transformer transformer ) {
+        try {
+            transformer.setOutputProperty(XSLT_INDENT_PROP, "4");
+        } catch( IllegalArgumentException e ) {
+            System.err.println( "indent-amount not supported: {}"+ e.toString() ); // ignore error, don't print stack-trace
+        }
+    }
+
+    public static void setFactoryIndent( TransformerFactory tf ) {
+        try {
+            tf.setAttribute("indent-number", new Integer(2));
+        } catch( IllegalArgumentException e ) {
+            System.err.println( "indent-number not supported: {}"+ e.toString() ); // ignore error, don't print stack-trace
+        }
+    }
+
+    public static void outputStandaloneFragment( final Transformer transformer ) {
+        transformer.setOutputProperty( OutputKeys.OMIT_XML_DECLARATION, "yes" );
+    }
+
+    public static void setIndentFlag( final Transformer transformer ) {
+        transformer.setOutputProperty( OutputKeys.INDENT, "yes" ); // see http://www.w3.org/TR/xslt#output
+    }
+
+    public static void setUtfEncoding( final Transformer transformer ) {
+        transformer.setOutputProperty( OutputKeys.ENCODING, "UTF-8" );
+    }
+
 }

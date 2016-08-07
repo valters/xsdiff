@@ -14,16 +14,18 @@
 
 package ch.vvingolds.xsdiff.app;
 
-import java.io.ByteArrayOutputStream;
-import java.nio.charset.StandardCharsets;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 import javax.xml.namespace.QName;
-import javax.xml.transform.sax.SAXTransformerFactory;
-import javax.xml.transform.sax.TransformerHandler;
-import javax.xml.transform.stream.StreamResult;
 
+import org.eclipse.jgit.diff.DiffAlgorithm;
+import org.eclipse.jgit.diff.Edit;
+import org.eclipse.jgit.diff.EditList;
+import org.eclipse.jgit.diff.HistogramDiff;
+import org.eclipse.jgit.diff.RawText;
+import org.eclipse.jgit.diff.RawTextComparator;
 import org.outerj.daisy.diff.DaisyDiff;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
@@ -217,6 +219,11 @@ public class XmlSchemaDiffReport {
             output.write( "~" );
             daisyDiff( oldText, newText, output.getHandler() );
             output.write( "~" );
+
+            output.write( "#" );
+            patienceDiff( oldText, newText );
+            output.write( "#" );
+
         }
     }
 
@@ -269,25 +276,6 @@ public class XmlSchemaDiffReport {
         output.writeLong( printNode.printNodeWithParentInfo( parentNode, comparison.getTestDetails().getParentXPath() ) );
     }
 
-    protected String daisyDiff( final String oldText, final String newText ) {
-
-        try {
-            final SAXTransformerFactory tf = XmlDomUtils.saxTransformerFactory();
-
-            final TransformerHandler resultHandler = XmlDomUtils.newFragmentTransformerHandler( tf );
-
-            final ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-            resultHandler.setResult(new StreamResult( bytes ));
-
-            daisyDiff( oldText, newText, resultHandler );
-
-            return new String( bytes.toByteArray(), StandardCharsets.UTF_8 );
-        }
-        catch( final Exception e ) {
-            return "(failed to daisydiff: "+e+")";
-        }
-    }
-
     public void daisyDiff( final String oldText, final String newText, final ContentHandler resultHandler ) {
         try {
             DaisyDiff.diffTag( oldText, newText, resultHandler );
@@ -297,5 +285,80 @@ public class XmlSchemaDiffReport {
         }
     }
 
+    private final DiffAlgorithm diffAlgorithm = new HistogramDiff();
+    private final RawTextComparator textComparator = RawTextComparator.WS_IGNORE_ALL;
+
+    private void patienceDiff( final String oldText, final String newText  ) {
+        final RawText a = new RawText( oldText.getBytes() );
+        final RawText b = new RawText( newText.getBytes() );
+
+        final EditList editList = diffAlgorithm.diff(textComparator, a, b );
+
+        if (editList.isEmpty()) {
+            output.writeLong( newText );
+        }
+        else {
+            format( editList, a, b );
+        }
+    }
+
+    /** jgit diff output */
+    public void format(final EditList edits, final RawText a, final RawText b) {
+
+        for (int curIdx = 0; curIdx < edits.size();) {
+            Edit curEdit = edits.get(curIdx);
+            final int endIdx = findCombinedEnd(edits, curIdx);
+            final Edit endEdit = edits.get(endIdx);
+
+            int aCur = (int) Math.max(0, (long) curEdit.getBeginA() - context);
+            int bCur = (int) Math.max(0, (long) curEdit.getBeginB() - context);
+            final int aEnd = (int) Math.min(a.size(), (long) endEdit.getEndA() + context);
+            final int bEnd = (int) Math.min(b.size(), (long) endEdit.getEndB() + context);
+
+            while (aCur < aEnd || bCur < bEnd) {
+                if (aCur < curEdit.getBeginA() || endIdx + 1 < curIdx) {
+                    output.addClearPart( a.getString( aCur ) );
+                    output.newline();
+                    aCur++;
+                    bCur++;
+                } else if (aCur < curEdit.getEndA()) {
+                    output.addRemovedPart( a.getString( aCur ) );
+                    output.newline();
+                    aCur++;
+                } else if (bCur < curEdit.getEndB()) {
+                    output.addAddedPart( b.getString( bCur ) );
+                    output.newline();
+                    bCur++;
+                }
+
+                if (end(curEdit, aCur, bCur) && ++curIdx < edits.size()) {
+                    curEdit = edits.get(curIdx);
+                }
+            }
+        }
+    }
+
+    private int findCombinedEnd(final List<Edit> edits, final int i) {
+        int end = i + 1;
+        while (end < edits.size()
+                && (combineA(edits, end) || combineB(edits, end))) {
+            end++;
+        }
+        return end - 1;
+    }
+
+    private final int context = 300;
+
+    private boolean combineA(final List<Edit> e, final int i) {
+        return e.get(i).getBeginA() - e.get(i - 1).getEndA() <= 2 * context;
+    }
+
+    private boolean combineB(final List<Edit> e, final int i) {
+        return e.get(i).getBeginB() - e.get(i - 1).getEndB() <= 2 * context;
+    }
+
+    private static boolean end(final Edit edit, final int a, final int b) {
+        return edit.getEndA() <= a && edit.getEndB() <= b;
+    }
 
 }

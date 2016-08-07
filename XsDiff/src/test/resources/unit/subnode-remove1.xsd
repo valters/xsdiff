@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xsd:schema xmlns:testing="http://vingolds.ch/xsd/2016/testing" xmlns:ns0="http://vingolds.ch/xsd/2016/ns0" xmlns:xsd="http://www.w3.org/2001/XMLSchema" targetNamespace="http://vingolds.ch/xsd/2016/testing">
+   <xsd:import schemaLocation="zero.xsd" namespace="http://vingolds.ch/xsd/2016/ns0"/>
+   <xsd:complexType name="details" abstract="true">
+      <xsd:complexContent>
+         <xsd:extension base="ns0:base">
+            <xsd:sequence>
+               <xsd:element name="id" type="xsd:string" minOccurs="0"/>
+               <xsd:element name="cd" type="xsd:string" minOccurs="0"/>
+            </xsd:sequence>
+         </xsd:extension>
+      </xsd:complexContent>
+   </xsd:complexType>
+</xsd:schema>

@@ -4,8 +4,8 @@
 <xs:complexType name="Complex_Type1">
 <xs:sequence>
 <xs:element minOccurs="0" name="field1" type="xs:string"/>
-<xs:element minOccurs="0" name="field2" type="NA0:MoneyOrNumberType"/>
-<xs:element minOccurs="0" name="field3" type="NA0:MoneyOrNumberType"/>
+<xs:element minOccurs="0" name="field2" type="NA0:NumberType"/>
+<xs:element minOccurs="0" name="field3" type="NA0:NumberType"/>
 <xs:element name="field4" type="xs:string"/>
 <xs:element name="field4b" type="xs:string"/>
 <xs:element minOccurs="0" name="field5" type="xs:int"/>

@@ -34,10 +34,16 @@ import org.xmlunit.diff.ComparisonType;
 import org.xmlunit.diff.Diff;
 import org.xmlunit.diff.Difference;
 
+import com.google.common.base.Joiner;
 import com.google.common.collect.Maps;
 
 /** XML Schema (XSD) comparison/report generator */
 public class XmlSchemaDiffReport {
+
+    private static final String PREFIX_OP_REMOVED = "removed";
+    private static final String PREFIX_OP_ADDED = "added";
+
+    private static final Joiner JOIN_KEY = Joiner.on( '-' );
 
     private final XmlDomUtils xmlDomUtils = new XmlDomUtils();
     private final NodeToString printNode = new NodeToString();
@@ -121,7 +127,7 @@ public class XmlSchemaDiffReport {
 
     /** @return false, if change could not be posted (parent holder did not exist). caller should print change explicitly. */
     private boolean markNodeAdded( final String parentXpath, final String nodeText, final Document parentDoc ) {
-        final NodeChangesHolder changeHolder = getOrAddHolder( parentXpath, parentDoc, "added" );
+        final NodeChangesHolder changeHolder = getOrAddHolder( parentXpath, parentDoc, PREFIX_OP_ADDED );
         if( changeHolder == null ) {
             return false;
         }
@@ -151,12 +157,12 @@ public class XmlSchemaDiffReport {
         }
 
         // should mark anyway
-        return addChangeHolder( opType + "-" + parentXpath, printNode.nodeToString( xmlDomUtils.findNode( parentDoc, parentXpath ) ) );
+        return addChangeHolder( opType, parentXpath, printNode.nodeToString( xmlDomUtils.findNode( parentDoc, parentXpath ) ) );
     }
 
     /** @return false, if change could not be posted (parent holder did not exist). caller should print change explicitly. */
     private boolean markNodeRemoved( final String parentXpath, final String nodeText, final Document parentDoc ) {
-        final NodeChangesHolder changeHolder = getOrAddHolder( parentXpath, parentDoc, "removed" );
+        final NodeChangesHolder changeHolder = getOrAddHolder( parentXpath, parentDoc, PREFIX_OP_REMOVED );
         if( changeHolder == null ) {
             return false;
         }
@@ -176,29 +182,7 @@ public class XmlSchemaDiffReport {
                 output.write( ". node order different: " + comparison.getTestDetails().getXPath() );
             }
             else if( comparison.getType() == ComparisonType.CHILD_NODELIST_LENGTH ) {
-                final long xpathDepth = XmlDomUtils.xpathDepth( details.getXPath() );
-                final boolean shouldTakeParent = xpathDepth > 2;
-
-                final int sizeControl = (int)comparison.getControlDetails().getValue();
-                final int sizeTest = (int)comparison.getTestDetails().getValue();
-                if( sizeTest > sizeControl ) {
-                    // nodes added
-                    output.write( String.format( ". %s node(s) added: %s <!-- %s -->", sizeTest - sizeControl, printNode.printNodeSignature( comparison.getTestDetails().getTarget() ), comparison.getTestDetails().getXPath() ) );
-                    addChangeHolder( comparison.getTestDetails().getXPath(), holderNodeText( testDoc, comparison.getTestDetails() ) );
-                }
-                else {
-                    // nodes removed
-                    output.write( String.format( ". %s node(s) removed: %s <!-- %s -->", sizeControl - sizeTest, printNode.printNodeSignature( comparison.getTestDetails().getTarget() ), comparison.getTestDetails().getXPath() ) );
-                    addChangeHolder( comparison.getControlDetails().getXPath(), holderNodeText( controlDoc, comparison.getControlDetails() ) );
-                }
-
-                if( shouldTakeParent ) {
-                    final String oldText = printNode.nodeToString( xmlDomUtils.findNode( controlDoc, comparison.getControlDetails().getParentXPath() ) );
-                    final String newText = printNode.nodeToString( xmlDomUtils.findNode( testDoc, comparison.getTestDetails().getParentXPath() ) );
-                    output.write( "~" );
-                    daisyDiff( oldText, newText, output.getHandler() );
-                    output.write( "~" );
-                }
+                printChildNodesChanged( testDoc, controlDoc, comparison );
 
             }
             else if( comparison.getType() == ComparisonType.ATTR_NAME_LOOKUP ) {
@@ -210,14 +194,50 @@ public class XmlSchemaDiffReport {
         }
     }
 
-    private NodeChangesHolder addChangeHolder( final String xpathExpr, final String nodeText ) {
-        if( nodeChanges.containsKey(  xpathExpr ) ) {
-            return nodeChanges.get( xpathExpr ); // should not happen
+    public void printChildNodesChanged( final Document testDoc, final Document controlDoc, final Comparison comparison ) {
+        final long xpathDepth = XmlDomUtils.xpathDepth( comparison.getTestDetails().getXPath() );
+        final boolean shouldTakeParent = xpathDepth > 2;
+
+        final int sizeControl = (int)comparison.getControlDetails().getValue();
+        final int sizeTest = (int)comparison.getTestDetails().getValue();
+        if( sizeTest > sizeControl ) {
+            // nodes added
+            output.write( String.format( ". %s node(s) added: %s <!-- %s -->", sizeTest - sizeControl, printNode.printNodeSignature( comparison.getTestDetails().getTarget() ), comparison.getTestDetails().getXPath() ) );
+            addChangeHolder( PREFIX_OP_ADDED, comparison.getTestDetails().getXPath(), holderNodeText( testDoc, comparison.getTestDetails() ) );
+        }
+        else {
+            // nodes removed
+            output.write( String.format( ". %s node(s) removed: %s <!-- %s -->", sizeControl - sizeTest, printNode.printNodeSignature( comparison.getTestDetails().getTarget() ), comparison.getTestDetails().getXPath() ) );
+            addChangeHolder( PREFIX_OP_REMOVED, comparison.getControlDetails().getXPath(), holderNodeText( controlDoc, comparison.getControlDetails() ) );
+        }
+
+        if( shouldTakeParent ) {
+            final String oldText = printNode.nodeToString( xmlDomUtils.findNode( controlDoc, comparison.getControlDetails().getParentXPath() ) );
+            final String newText = printNode.nodeToString( xmlDomUtils.findNode( testDoc, comparison.getTestDetails().getParentXPath() ) );
+            output.write( "~" );
+            daisyDiff( oldText, newText, output.getHandler() );
+            output.write( "~" );
+        }
+    }
+
+    private NodeChangesHolder addChangeHolder( final String opType, final String xpathExpr, final String nodeText ) {
+        final String key = makeKey( opType, xpathExpr );
+
+        final NodeChangesHolder holder = nodeChanges.get( key );
+        if( holder != null ) {
+            return holder;
         }
 
         final NodeChangesHolder changesHolder = new NodeChangesHolder( nodeText );
-        nodeChanges.put( xpathExpr, changesHolder );
+        nodeChanges.put( key, changesHolder );
         return changesHolder;
+    }
+
+    private String makeKey( final String opType, final String xpathExpr ) {
+        if( opType == null ) {
+            return xpathExpr;
+        }
+        return JOIN_KEY.join( opType, xpathExpr );
     }
 
     /** this one is clever enough to expand node text up to parent node scope, to provide interesting context when changes are printed */

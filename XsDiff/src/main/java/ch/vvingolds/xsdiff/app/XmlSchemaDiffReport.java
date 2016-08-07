@@ -14,10 +14,21 @@
 
 package ch.vvingolds.xsdiff.app;
 
-import javax.xml.namespace.QName;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.nio.charset.StandardCharsets;
 
+import javax.xml.namespace.QName;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.sax.SAXTransformerFactory;
+import javax.xml.transform.sax.TransformerHandler;
+import javax.xml.transform.stream.StreamResult;
+
+import org.outerj.daisy.diff.DaisyDiff;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
+import org.xml.sax.ContentHandler;
 import org.xmlunit.diff.Comparison;
 import org.xmlunit.diff.Comparison.Detail;
 import org.xmlunit.diff.ComparisonType;
@@ -52,7 +63,7 @@ public class XmlSchemaDiffReport {
                 printDeletedNode( controlDoc, comparison );
             }
             else {
-                printModifiedNode( testDoc, comparison );
+                printModifiedNode( testDoc, controlDoc, comparison );
             }
         }
     }
@@ -72,7 +83,7 @@ public class XmlSchemaDiffReport {
     }
 
 
-    private void printModifiedNode( Document testDoc, final Comparison comparison ) {
+    private void printModifiedNode( Document testDoc, Document controlDoc, final Comparison comparison ) {
 
         final Comparison.Detail details = comparison.getControlDetails();
         if( XmlDomUtils.xpathDepth( details.getXPath() ) == 1 ) {
@@ -86,16 +97,28 @@ public class XmlSchemaDiffReport {
                 int sizeControl = (int)comparison.getControlDetails().getValue();
                 int sizeTest = (int)comparison.getTestDetails().getValue();
                 if( sizeTest > sizeControl ) {
+                    // nodes added
                     System.out.println( String.format( ". %s node(s) added: %s <!-- %s -->", sizeTest - sizeControl, printNode.printNodeSignature( comparison.getTestDetails().getTarget() ), comparison.getTestDetails().getXPath() ) );
-                } else {
+                }
+                else {
+                    // nodes removed
                     System.out.println( String.format( ". %s node(s) removed: %s <!-- %s -->", sizeControl - sizeTest, printNode.printNodeSignature( comparison.getTestDetails().getTarget() ), comparison.getTestDetails().getXPath() ) );
                 }
+
+                if( XmlDomUtils.xpathDepth( details.getXPath() ) > 2 ) {
+                    final String oldText = printNode.nodeToString( xmlDomUtils.findNode( controlDoc, comparison.getControlDetails().getParentXPath() ) );
+                    final String newText = printNode.nodeToString( xmlDomUtils.findNode( testDoc, comparison.getTestDetails().getParentXPath() ) );
+                    System.out.println( "~" );
+                    System.out.println( daisyDiff( oldText, newText) );
+                    System.out.println( "~" );
+                }
+
             } 
             else if( comparison.getType() == ComparisonType.ATTR_NAME_LOOKUP ) {
                 printNewAttr( comparison.getTestDetails() );
             }
             else {
-                printNodeDiff( testDoc, comparison, details );
+                printNodeDiff( testDoc, comparison );
             }
         }
     }
@@ -105,13 +128,43 @@ public class XmlSchemaDiffReport {
         System.out.println( "MODIFIED ; new attribute [" + printNode.attrToString( detail.getTarget(), (QName)detail.getValue() ) + "] <!-- xpath: " + detail.getXPath() + " -->" );
     }
 
-    private void printNodeDiff( Document testDoc, final Comparison comparison, final Comparison.Detail details ) {
+    private void printNodeDiff( Document testDoc, final Comparison comparison ) {
         System.out.println( "MODIFIED ; " + comparison.toString() + "\n" );
-        System.out.println( "- " + printNode.nodeToString( details.getTarget() ) );
-        System.out.println( "+ " + printNode.nodeToString( comparison.getTestDetails().getTarget() ) );
-   
+        final String oldText = printNode.nodeToString( comparison.getControlDetails().getTarget() );
+        final String newText = printNode.nodeToString( comparison.getTestDetails().getTarget() );
+        System.out.println( "- " + oldText );
+        System.out.println( "+ " + newText );
+
+        System.out.println( "~" );
+        System.out.println( daisyDiff( oldText, newText) );
+        System.out.println( "~" );
+
         Node parentNode = xmlDomUtils.findNode( testDoc, comparison.getTestDetails().getParentXPath() );
-        System.out.println( printNode.printNodeWithParentInfo( parentNode, details.getParentXPath() ) );
+        System.out.println( printNode.printNodeWithParentInfo( parentNode, comparison.getTestDetails().getParentXPath() ) );
+    }
+
+    private String daisyDiff( final String oldText, final String newText ) {
+
+        try {
+            final SAXTransformerFactory tf = (SAXTransformerFactory) TransformerFactory.newInstance();
+            XmlDomUtils.setFactoryIndent( tf );
+
+            final TransformerHandler resultHandler = tf.newTransformerHandler();
+            final Transformer transformer = resultHandler.getTransformer();
+            XmlDomUtils.setUtfEncoding( transformer );
+            XmlDomUtils.setIndentFlag( transformer );
+            XmlDomUtils.outputStandaloneFragment( transformer );
+            
+            ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+            resultHandler.setResult(new StreamResult( bytes ));
+
+            DaisyDiff.diffTag( oldText, newText, resultHandler );
+
+            return new String( bytes.toByteArray(), StandardCharsets.UTF_8 );
+        }
+        catch( Exception e ) {
+            return "(failed to daisydiff: "+e+")";
+        }
     }
 
 }

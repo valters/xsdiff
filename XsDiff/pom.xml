@@ -26,6 +26,12 @@
         </dependency>
 
         <dependency>
+            <groupId>org.ahocorasick</groupId>
+            <artifactId>ahocorasick</artifactId>
+            <version>0.3.0</version>
+        </dependency>
+
+        <dependency>
             <groupId>org.outerj.daisy</groupId>
             <artifactId>daisydiff</artifactId>
             <version>1.2-NX3-VV1</version>

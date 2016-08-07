@@ -86,8 +86,14 @@ public class XmlSchemaDiffReport {
     private void printDeletedNode( final Document controlDoc, final Comparison comparison ) {
         final Comparison.Detail details = comparison.getControlDetails();
         output.write( "DELETED <!-- xpath: " + details.getXPath() + " (parent node: "+details.getParentXPath()+" ) -->" );
-        output.writeLong( printNode.nodeToString( details.getTarget() ) );
-        output.writeLong( printNode.printNodeWithParentInfo( xmlDomUtils.findNode( controlDoc, details.getParentXPath() ), details.getParentXPath() ) );
+
+        final String nodeText = printNode.nodeToString( xmlDomUtils.findNode( controlDoc, details.getXPath() ) );
+        output.writeLong( nodeText );
+        output.newline();
+
+        final String parentText = printNode.printNodeWithParentInfo( xmlDomUtils.findNode( controlDoc, details.getParentXPath() ), details.getParentXPath() );
+        output.writeLong( parentText );
+        output.markPartRemoved( parentText, nodeText );
     }
 
 

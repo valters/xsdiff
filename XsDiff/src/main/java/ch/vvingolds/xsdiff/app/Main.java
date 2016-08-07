@@ -59,11 +59,9 @@ public class Main {
         /** XSL looks for diffreport/diff/node() */
         private static final String XSL_DIFF_PLACEHOLDER = "diff";
 
-        private final XmlDomUtils xmlDomUtils = new XmlDomUtils();
-
         public void run() {
             try {
-                runDiff( TESTDATA_FOLDER, "simple-seq-len1.xsd", TESTDATA_FOLDER, "simple-seq-len2.xsd" );
+                runDiff( TESTDATA_FOLDER, "simple-seq-len2.xsd", TESTDATA_FOLDER, "simple-seq-len1.xsd" );
                 //runDiff( TESTDATA_FOLDER+"a/", TESTDATA_FOLDER+"b/", TESTDATA_FOLDER+"files.lst" );
                 System.out.println( "done" );
             }
@@ -153,7 +151,7 @@ public class Main {
 
             try {
 
-                final DocumentBuilder docBuilder = xmlDomUtils.documentBuilder();
+                final DocumentBuilder docBuilder = XmlDomUtils.documentBuilder();
                 final Document controlDoc = docBuilder.parse( new InputSource( file1 ) );
                 final Document testDoc = docBuilder.parse( new InputSource( file2 ) );
 

@@ -14,8 +14,11 @@
 
 package ch.vvingolds.xsdiff.app;
 
+import java.util.Collection;
 import java.util.function.Consumer;
 
+import org.ahocorasick.trie.Emit;
+import org.ahocorasick.trie.Trie;
 import org.outerj.daisy.diff.output.TextDiffOutput;
 import org.outerj.daisy.diff.tag.TagSaxDiffOutput;
 import org.xml.sax.Attributes;
@@ -118,12 +121,20 @@ public class HtmlContentOutput implements TextDiffOutput {
 
     public void markPartRemoved( final String text, final String removedPart ) {
         try {
-            final int removeStarts = text.indexOf( removedPart );
-            final String clearPartBefore = text.substring( 0, removeStarts );
-            final String clearPartAfter = text.substring( removeStarts + removedPart.length(), text.length() );
-            addClearPart( clearPartBefore );
-            addRemovedPart( removedPart );
-            addClearPart( clearPartAfter );
+
+            final Trie trie = Trie.builder()
+                    .removeOverlaps()
+                    .addKeyword(removedPart)
+                    .build();
+            final Collection<Emit> emits = trie.parseText( text );
+
+            for( final Emit emit : emits ) {
+                final String clearPartBefore = text.substring( 0, emit.getStart() );
+                final String clearPartAfter = text.substring( emit.getEnd()+1, text.length() );
+                addClearPart( clearPartBefore );
+                addRemovedPart( emit.getKeyword() );
+                addClearPart( clearPartAfter );
+            }
         }
         catch( final Exception e ) {
             System.err.println( "Failed to write removed paragraph: ["+removedPart+"] from [" + text + "], exception occurred: " + e );
@@ -133,12 +144,20 @@ public class HtmlContentOutput implements TextDiffOutput {
 
     public void markPartAdded( final String text, final String addedPart ) {
         try {
-            final int removeStarts = text.indexOf( addedPart );
-            final String clearPartBefore = text.substring( 0, removeStarts );
-            final String clearPartAfter = text.substring( removeStarts + addedPart.length(), text.length() );
-            addClearPart( clearPartBefore );
-            addAddedPart( addedPart );
-            addClearPart( clearPartAfter );
+
+            final Trie trie = Trie.builder()
+                    .removeOverlaps()
+                    .addKeyword(addedPart)
+                    .build();
+            final Collection<Emit> emits = trie.parseText( text );
+
+            for( final Emit emit : emits ) {
+                final String clearPartBefore = text.substring( 0, emit.getStart() );
+                final String clearPartAfter = text.substring( emit.getEnd()+1, text.length() );
+                addClearPart( clearPartBefore );
+                addAddedPart( emit.getKeyword() );
+                addClearPart( clearPartAfter );
+            }
         }
         catch( final Exception e ) {
             System.err.println( "Failed to write added paragraph: ["+addedPart+"] from [" + text + "], exception occurred: " + e );

@@ -28,7 +28,7 @@
         <dependency>
             <groupId>org.outerj.daisy</groupId>
             <artifactId>daisydiff</artifactId>
-            <version>1.2-NX3-SNAPSHOT</version>
+            <version>1.2-NX3-VV1</version>
             <classifier>shaded</classifier>
             <exclusions>
                 <exclusion>

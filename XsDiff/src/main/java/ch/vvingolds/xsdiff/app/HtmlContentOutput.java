@@ -111,14 +111,26 @@ public class HtmlContentOutput implements TextDiffOutput {
 
 
     @Override
-    public void addRemovedPart( final String text ) throws Exception {
-        diffOutput.addRemovedPart( text );
+    public void addRemovedPart( final String text ) {
+        try {
+            diffOutput.addRemovedPart( text );
+        }
+        catch( final Exception e ) {
+            System.err.println( "Failed to write added text: [" + text + "], exception occurred: " + e );
+            e.printStackTrace();
+        }
     }
 
 
     @Override
-    public void addAddedPart( final String text ) throws Exception {
-        diffOutput.addAddedPart( text );
+    public void addAddedPart( final String text ) {
+        try {
+            diffOutput.addAddedPart( text );
+        }
+        catch( final Exception e ) {
+            System.err.println( "Failed to write added text: [" + text + "], exception occurred: " + e );
+            e.printStackTrace();
+        }
     }
 
     public void markPartRemoved( final String text, final List<String> removedParts ) {
@@ -178,14 +190,42 @@ public class HtmlContentOutput implements TextDiffOutput {
 
     public void markChanges( final String xpath, final NodeChanges changes ) {
 
-        write( "<!-- " + xpath + "-->" );
         if( ! changes.getAddedNodes().isEmpty() ) {
-            write( "! adds");
+            write( "! <!-- adds for <!-- " + xpath + "-->");
             markPartAdded( changes.getParentNodeNext(), changes.getAddedNodes() );
         }
         if( ! changes.getRemovedNodes().isEmpty() ) {
-            write( "! removes");
+            write( "! <!-- removes for <!-- " + xpath + "-->");
             markPartRemoved( changes.getParentNodeNext(), changes.getRemovedNodes() );
+        }
+    }
+
+
+    public void startDiv() {
+        try {
+            consumer.startElement( "", "div", "div", classAttr( "diff-topbar") );
+        }
+        catch( final SAXException e ) {
+            System.err.println( "Failed to write div element, exception occurred: " + e );
+            e.printStackTrace();
+        }
+    }
+
+
+    private Attributes classAttr( final String cssClass ) {
+        final AttributesImpl attrs = new AttributesImpl();
+        attrs.addAttribute("", "class", "class", "CDATA", cssClass);
+        return attrs;
+    }
+
+
+    public void endDiv() {
+        try {
+            consumer.endElement( "", "div", "div" );
+        }
+        catch( final SAXException e ) {
+            System.err.println( "Failed to write div element, exception occurred: " + e );
+            e.printStackTrace();
         }
     }
 

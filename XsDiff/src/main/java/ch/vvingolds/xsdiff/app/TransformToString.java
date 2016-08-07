@@ -24,6 +24,7 @@ import javax.xml.transform.TransformerFactoryConfigurationError;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
+import org.w3c.dom.Attr;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 
@@ -46,6 +47,10 @@ public class TransformToString {
     }
 
     public String nodeToStringClean( final Node node ) {
+        if( node instanceof Attr ) {
+            return nodeToString( node );
+        }
+
         try {
             final TransformerFactory tf = XmlDomUtils.transformerFactory();
             final Transformer transformer = XmlDomUtils.newFragmentTransformer( tf );

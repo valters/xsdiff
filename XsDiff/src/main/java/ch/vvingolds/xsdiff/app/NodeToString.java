@@ -83,7 +83,7 @@ public class NodeToString {
 
         b.append( printNodeParentInfo( parentNode ) );
         return b.append( "\n        " )
-                .append( nodeToString( parentNode ) ).append( "  <!-- by xpath: " ).append( parentXpath ).append( " -->" )
+                .append( nodeToString( parentNode ) ).append( "  <!-- by xpath: " ).append( parentXpath ).append( " -->\n\n" )
                 .toString();
     }
 

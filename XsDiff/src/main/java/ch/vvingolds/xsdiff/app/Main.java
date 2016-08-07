@@ -61,7 +61,9 @@ public class Main {
 
         public void run() {
             try {
-                runDiff( TESTDATA_FOLDER, "simple-seq-len2.xsd", TESTDATA_FOLDER, "simple-seq-len1.xsd" );
+                //runDiff( TESTDATA_FOLDER, "subnode-remove1.xsd", TESTDATA_FOLDER, "subnode-remove2.xsd" );
+                //runDiff( TESTDATA_FOLDER, "simple-seq-len1.xsd", TESTDATA_FOLDER, "simple-seq-len2.xsd" );
+                runDiff( TESTDATA_FOLDER, "ext-remove1.xsd", TESTDATA_FOLDER, "ext-remove2.xsd" );
                 //runDiff( TESTDATA_FOLDER+"a/", TESTDATA_FOLDER+"b/", TESTDATA_FOLDER+"files.lst" );
                 System.out.println( "done" );
             }
@@ -80,7 +82,8 @@ public class Main {
             final Path f2 = fs.getPath( folder2, file2 );
 
             final HtmlContentOutput contentOutput = startOutput();
-            contentOutput.write( "comparing: "+f1+" with "+f2 );
+
+            printFileComparisonHeader( contentOutput, f1, f2 );
 
             runDiff( Files.newBufferedReader( f1 ),
                     Files.newBufferedReader( f2 ),
@@ -104,7 +107,7 @@ public class Main {
                 final Path f1 = fs.getPath( folder1, fileName );
                 final Path f2 = fs.getPath( folder2, fileName );
 
-                contentOutput.write( "comparing: "+f1+" with "+f2 );
+                printFileComparisonHeader( contentOutput, f1, f2 );
 
                 runDiff( Files.newBufferedReader( f1 ),
                         Files.newBufferedReader( f2 ),
@@ -112,6 +115,12 @@ public class Main {
             }
 
             finishOutput( contentOutput.getHandler() );
+        }
+
+        public void printFileComparisonHeader( final HtmlContentOutput contentOutput, final Path f1, final Path f2 ) {
+            contentOutput.startDiv();
+            contentOutput.write( "comparing: "+f1+" with "+f2 );
+            contentOutput.endDiv();
         }
 
         public List<String> collectLines( final String listFilesToCompare ) {

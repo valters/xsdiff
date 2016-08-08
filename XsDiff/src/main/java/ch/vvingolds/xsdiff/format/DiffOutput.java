@@ -8,4 +8,5 @@ public interface DiffOutput {
 
     public void addedPart( final String text );
 
+    void newline();
 }

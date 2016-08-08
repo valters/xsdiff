@@ -15,46 +15,32 @@
 package ch.vvingolds.xsdiff.app;
 
 import java.util.Collections;
-import java.util.List;
-import java.util.Map;
 
 import javax.xml.namespace.QName;
 
-import org.eclipse.jgit.diff.DiffAlgorithm;
-import org.eclipse.jgit.diff.Edit;
-import org.eclipse.jgit.diff.EditList;
-import org.eclipse.jgit.diff.HistogramDiff;
-import org.eclipse.jgit.diff.RawText;
-import org.eclipse.jgit.diff.RawTextComparator;
-import org.outerj.daisy.diff.DaisyDiff;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
-import org.xml.sax.ContentHandler;
 import org.xmlunit.diff.Comparison;
 import org.xmlunit.diff.Comparison.Detail;
 import org.xmlunit.diff.ComparisonType;
 import org.xmlunit.diff.Diff;
 import org.xmlunit.diff.Difference;
 
-import com.google.common.base.Joiner;
-import com.google.common.collect.Maps;
+import ch.vvingolds.xsdiff.format.DaisyDiffFormatter;
+import ch.vvingolds.xsdiff.format.HistogramDiffFormatter;
+import ch.vvingolds.xsdiff.format.SemanticDiffFormatter;
 
 /** XML Schema (XSD) comparison/report generator */
 public class XmlSchemaDiffReport {
 
-    private static final String PREFIX_OP_REMOVED = "removed";
-    private static final String PREFIX_OP_ADDED = "added";
-
-    private static final Joiner JOIN_KEY = Joiner.on( '-' );
-
     private final XmlDomUtils xmlDomUtils = new XmlDomUtils();
     private final NodeToString printNode = new NodeToString();
     private final HtmlContentOutput output;
-
-    private final Map<String, NodeChangesHolder> nodeChanges = Maps.newLinkedHashMap();
+    private final SemanticDiffFormatter semanticDiff;
 
     public XmlSchemaDiffReport( final HtmlContentOutput output ) {
         this.output = output;
+        this.semanticDiff = new SemanticDiffFormatter( output );
     }
 
     private static boolean isAdded( final Comparison comparison ) {
@@ -83,13 +69,7 @@ public class XmlSchemaDiffReport {
         }
 
         output.write( "++ semantic adds ; removes --" );
-        printAddsAndRemoves();
-    }
-
-    private void printAddsAndRemoves() {
-        for( final Map.Entry<String, NodeChangesHolder> entry : nodeChanges.entrySet() ) {
-            output.markChanges( entry.getKey(), entry.getValue() );
-        }
+        semanticDiff.printDiff();
     }
 
     private void printAddedNode( final Document testDoc, final Comparison comparison ) {
@@ -103,11 +83,11 @@ public class XmlSchemaDiffReport {
         output.addedPart( nodeText );
         output.newline();
 
-        if( ! markNodeAdded( details.getParentXPath(), nodeText, testDoc ) ) {
+        if( ! semanticDiff.markNodeAdded( details.getParentXPath(), nodeText, testDoc ) ) {
             output.write( "! holder for "+  details.getParentXPath() + " did not exist(?)");
             final String parentText = printNode.printNodeWithParentInfo( parentNode, details.getParentXPath() );
             output.writeLong( parentText );
-            output.markPartAdded( parentText, Collections.singletonList( nodeText ) );
+            semanticDiff.markPartAdded( parentText, Collections.singletonList( nodeText ) );
         }
     }
 
@@ -122,58 +102,12 @@ public class XmlSchemaDiffReport {
         output.removedPart( nodeText );
         output.newline();
 
-        if( ! markNodeRemoved( details.getParentXPath(), nodeText, controlDoc ) ) {
+        if( ! semanticDiff.markNodeRemoved( details.getParentXPath(), nodeText, controlDoc ) ) {
             output.write( "! (debug) holder for "+  details.getParentXPath() + " did not exist(?)");
             final String parentText = printNode.printNodeWithParentInfo( parentNode, details.getParentXPath() );
             output.writeLong( parentText );
-            output.markPartRemoved( parentText, Collections.singletonList( nodeText ) );
+            semanticDiff.markPartRemoved( parentText, Collections.singletonList( nodeText ) );
         }
-    }
-
-    /** @return false, if change could not be posted (parent holder did not exist). caller should print change explicitly. */
-    private boolean markNodeAdded( final String parentXpath, final String nodeText, final Document parentDoc ) {
-        final NodeChangesHolder changeHolder = getOrAddHolder( parentXpath, parentDoc, PREFIX_OP_ADDED );
-        if( changeHolder == null ) {
-            return false;
-        }
-
-        changeHolder.addedNode( nodeText );
-        return true;
-    }
-
-    /** create holder on the fly for certain add/remove operations
-     * @param opType make sure we can have a holder for each add/remove because parent text is different
-     */
-    private NodeChangesHolder getOrAddHolder( final String parentXpath, final Document parentDoc, final String opType ) {
-        final NodeChangesHolder changeHolder = nodeChanges.get( parentXpath );
-        if( changeHolder != null ) {
-            return changeHolder;
-        }
-
-        return addHolder( parentXpath, parentDoc, opType );
-    }
-
-    /** check of change holder should be created, if one does not exist. verifies that the node is not located too shallow (i.e., we don't want to track stuff added under doc root) */
-    public NodeChangesHolder addHolder( final String parentXpath, final Document parentDoc, final String opType ) {
-        final long xpathDepth = XmlDomUtils.xpathDepth( parentXpath );
-        final boolean tooShallow = xpathDepth < 2;
-        if( tooShallow ) {
-            return null;
-        }
-
-        // should mark anyway
-        return addChangeHolder( opType, parentXpath, printNode.nodeToString( xmlDomUtils.findNode( parentDoc, parentXpath ) ) );
-    }
-
-    /** @return false, if change could not be posted (parent holder did not exist). caller should print change explicitly. */
-    private boolean markNodeRemoved( final String parentXpath, final String nodeText, final Document parentDoc ) {
-        final NodeChangesHolder changeHolder = getOrAddHolder( parentXpath, parentDoc, PREFIX_OP_REMOVED );
-        if( changeHolder == null ) {
-            return false;
-        }
-
-        changeHolder.removedNode( nodeText );
-        return true;
     }
 
     private void printModifiedNode( final Document testDoc, final Document controlDoc, final Comparison comparison ) {
@@ -212,7 +146,7 @@ public class XmlSchemaDiffReport {
             output.writeRaw( " * " );
             output.endSpan();
 
-            addChangeHolder( PREFIX_OP_ADDED, comparison.getTestDetails().getXPath(), holderNodeText( testDoc, comparison.getTestDetails() ) );
+            semanticDiff.addChangeHolder( semanticDiff.opAdded(), comparison.getTestDetails().getXPath(), holderNodeText( testDoc, comparison.getTestDetails() ) );
         }
         else {
             // nodes removed
@@ -220,41 +154,21 @@ public class XmlSchemaDiffReport {
             output.writeRaw( " * " );
             output.endSpan();
 
-            addChangeHolder( PREFIX_OP_REMOVED, comparison.getControlDetails().getXPath(), holderNodeText( controlDoc, comparison.getControlDetails() ) );
+            semanticDiff.addChangeHolder( semanticDiff.opRemoved(), comparison.getControlDetails().getXPath(), holderNodeText( controlDoc, comparison.getControlDetails() ) );
         }
 
         if( shouldTakeParent ) {
             final String oldText = printNode.nodeToString( xmlDomUtils.findNode( controlDoc, comparison.getControlDetails().getParentXPath() ) );
             final String newText = printNode.nodeToString( xmlDomUtils.findNode( testDoc, comparison.getTestDetails().getParentXPath() ) );
             output.write( "~ daisy" );
-            daisyDiff( oldText, newText, output.getHandler() );
+            new DaisyDiffFormatter( output.getHandler() ).printDiff( oldText, newText );
             output.write( "~" );
 
             output.write( "# histogram" );
-            patienceDiff( oldText, newText );
+            new HistogramDiffFormatter( output ).printDiff( oldText, newText );
             output.write( "#" );
 
         }
-    }
-
-    private NodeChangesHolder addChangeHolder( final String opType, final String xpathExpr, final String nodeText ) {
-        final String key = makeKey( opType, xpathExpr );
-
-        final NodeChangesHolder holder = nodeChanges.get( key );
-        if( holder != null ) {
-            return holder;
-        }
-
-        final NodeChangesHolder changesHolder = new NodeChangesHolder( nodeText );
-        nodeChanges.put( key, changesHolder );
-        return changesHolder;
-    }
-
-    private String makeKey( final String opType, final String xpathExpr ) {
-        if( opType == null ) {
-            return xpathExpr;
-        }
-        return JOIN_KEY.join( opType, xpathExpr );
     }
 
     /** this one is clever enough to expand node text up to parent node scope, to provide interesting context when changes are printed */
@@ -279,96 +193,11 @@ public class XmlSchemaDiffReport {
         output.write( "+ " + newText );
 
         output.write( "~" );
-        daisyDiff( oldText, newText, output.getHandler() );
+        new DaisyDiffFormatter( output.getHandler() ).printDiff( oldText, newText );
         output.write( "~" );
 
         final Node parentNode = xmlDomUtils.findNode( testDoc, comparison.getTestDetails().getParentXPath() );
         output.writeLong( printNode.printNodeWithParentInfo( parentNode, comparison.getTestDetails().getParentXPath() ) );
-    }
-
-    public void daisyDiff( final String oldText, final String newText, final ContentHandler resultHandler ) {
-        try {
-            DaisyDiff.diffTag( oldText, newText, resultHandler );
-        }
-        catch( final Exception e ) {
-            output.write( "(failed to daisydiff: "+e+")" );
-        }
-    }
-
-    private final DiffAlgorithm diffAlgorithm = new HistogramDiff();
-    private final RawTextComparator textComparator = RawTextComparator.WS_IGNORE_ALL;
-
-    private void patienceDiff( final String oldText, final String newText  ) {
-        final RawText a = new RawText( oldText.getBytes() );
-        final RawText b = new RawText( newText.getBytes() );
-
-        final EditList editList = diffAlgorithm.diff(textComparator, a, b );
-
-        if (editList.isEmpty()) {
-            output.writeLong( newText );
-        }
-        else {
-            format( editList, a, b );
-        }
-    }
-
-    /** jgit diff output */
-    public void format(final EditList edits, final RawText a, final RawText b) {
-
-        for (int curIdx = 0; curIdx < edits.size();) {
-            Edit curEdit = edits.get(curIdx);
-            final int endIdx = findCombinedEnd(edits, curIdx);
-            final Edit endEdit = edits.get(endIdx);
-
-            int aCur = (int) Math.max(0, (long) curEdit.getBeginA() - context);
-            int bCur = (int) Math.max(0, (long) curEdit.getBeginB() - context);
-            final int aEnd = (int) Math.min(a.size(), (long) endEdit.getEndA() + context);
-            final int bEnd = (int) Math.min(b.size(), (long) endEdit.getEndB() + context);
-
-            while (aCur < aEnd || bCur < bEnd) {
-                if (aCur < curEdit.getBeginA() || endIdx + 1 < curIdx) {
-                    output.clearPart( a.getString( aCur ) );
-                    output.newline();
-                    aCur++;
-                    bCur++;
-                } else if (aCur < curEdit.getEndA()) {
-                    output.removedPart( a.getString( aCur ) );
-                    output.newline();
-                    aCur++;
-                } else if (bCur < curEdit.getEndB()) {
-                    output.addedPart( b.getString( bCur ) );
-                    output.newline();
-                    bCur++;
-                }
-
-                if (end(curEdit, aCur, bCur) && ++curIdx < edits.size()) {
-                    curEdit = edits.get(curIdx);
-                }
-            }
-        }
-    }
-
-    private int findCombinedEnd(final List<Edit> edits, final int i) {
-        int end = i + 1;
-        while (end < edits.size()
-                && (combineA(edits, end) || combineB(edits, end))) {
-            end++;
-        }
-        return end - 1;
-    }
-
-    private final int context = 300;
-
-    private boolean combineA(final List<Edit> e, final int i) {
-        return e.get(i).getBeginA() - e.get(i - 1).getEndA() <= 2 * context;
-    }
-
-    private boolean combineB(final List<Edit> e, final int i) {
-        return e.get(i).getBeginB() - e.get(i - 1).getEndB() <= 2 * context;
-    }
-
-    private static boolean end(final Edit edit, final int a, final int b) {
-        return edit.getEndA() <= a && edit.getEndB() <= b;
     }
 
 }

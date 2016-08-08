@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xsd:schema xmlns:testing="http://vingolds.ch/xsd/2016/testing" xmlns:ns0="http://vingolds.ch/xsd/2016/ns0" xmlns:xsd="http://www.w3.org/2001/XMLSchema" targetNamespace="http://vingolds.ch/xsd/2016/testing">
+
+   <xsd:complexType name="customer">
+      <xsd:complexContent>
+         <xsd:extension base="testing:customer">
+            <xsd:sequence>
+               <xsd:element name="associated" type="xsd:boolean" minOccurs="0"/>
+               <xsd:element name="type" type="xsd:string" minOccurs="0"/>
+               <xsd:element name="started" type="xsd:dateTime" minOccurs="0"/>
+               <xsd:element name="dba" type="xsd:string" minOccurs="0"/>
+               <xsd:element name="description" type="xsd:string" minOccurs="0"/>
+               <xsd:element name="divisions" type="testing:division" minOccurs="0" maxOccurs="unbounded" nillable="true"/>
+               <xsd:element name="entity" type="xsd:string" minOccurs="0" maxOccurs="unbounded" nillable="true"/>
+               <xsd:element name="sponsor" type="xsd:boolean" minOccurs="0"/>
+               <xsd:element name="legalId" type="xsd:string" minOccurs="0"/>
+               <xsd:element name="legalName" type="xsd:string" minOccurs="0"/>
+               <xsd:element name="phonetic" type="xsd:string" minOccurs="0"/>
+               <xsd:element name="code" type="xsd:string" minOccurs="0"/>
+               <xsd:element name="industry" type="xsd:string" minOccurs="0"/>
+               <xsd:element name="sector" type="xsd:string" minOccurs="0"/>
+               <xsd:element name="subsector" type="xsd:string" minOccurs="0"/>
+               <xsd:element name="continuous" type="xsd:int" minOccurs="0"/>
+               <xsd:element name="categories" type="xsd:string" minOccurs="0" maxOccurs="unbounded" nillable="true"/>
+               <xsd:element name="comment" type="xsd:string" minOccurs="0"/>
+               <xsd:element name="s-code" type="xsd:string" minOccurs="0"/>
+               <xsd:element name="s-division" type="xsd:string" minOccurs="0"/>
+               <xsd:element name="s-industry" type="xsd:string" minOccurs="0"/>
+               <xsd:element name="reference" type="xsd:boolean" minOccurs="0"/>
+            </xsd:sequence>
+         </xsd:extension>
+      </xsd:complexContent>
+   </xsd:complexType>
+
+</xsd:schema>

@@ -42,7 +42,7 @@ import org.xml.sax.helpers.AttributesImpl;
 /** entry point */
 public class Main {
 
-    protected static final String TESTDATA_FOLDER = "../testdata/";
+    protected static final String TESTDATA_FOLDER = "./src/test/resources/unit/";
 
     public static void main( final String[] args ) {
         new App().run();
@@ -118,9 +118,9 @@ public class Main {
         }
 
         public void printFileComparisonHeader( final HtmlContentOutput contentOutput, final Path f1, final Path f2 ) {
-            contentOutput.startDiv();
+            contentOutput.startFileHeader();
             contentOutput.write( "comparing: "+f1+" with "+f2 );
-            contentOutput.endDiv();
+            contentOutput.endFileHeader();
         }
 
         public List<String> collectLines( final String listFilesToCompare ) {

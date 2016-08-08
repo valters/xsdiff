@@ -28,7 +28,8 @@
         <tr>
 
         <td style="text-align: center; font-size: 110%;">
-            <a class="diffpage-html-a" href="#">XsDiff</a> compare report.
+            <a class="diffpage-html-a" href="#">XsDiff</a> compare report.<br/>
+            DaisyDiff / HistogramDiff / XsDiff semantic diff
         </td>
 
         </tr></table>

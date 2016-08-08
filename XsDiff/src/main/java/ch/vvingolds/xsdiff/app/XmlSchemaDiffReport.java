@@ -69,7 +69,6 @@ public class XmlSchemaDiffReport {
 
         final Diff xmlDiff = new XmlSchemaDiffBuilder().compare( controlDoc, testDoc );
 
-        output.write( "TYPE ; XPATH ; OLD VALUE" );
         for( final Difference diff : xmlDiff.getDifferences() ) {
             final Comparison comparison = diff.getComparison();
             if( isAdded( comparison ) ) {
@@ -83,7 +82,7 @@ public class XmlSchemaDiffReport {
             }
         }
 
-        output.write( "++ ADDS ; REMOVES ++" );
+        output.write( "++ semantic adds ; removes --" );
         printAddsAndRemoves();
     }
 
@@ -96,9 +95,11 @@ public class XmlSchemaDiffReport {
     private void printAddedNode( final Document testDoc, final Comparison comparison ) {
         final Comparison.Detail details = comparison.getTestDetails();
         final Node parentNode = xmlDomUtils.findNode( testDoc, details.getParentXPath() );
-        output.write( "ADDED <!-- xpath: " + details.getXPath() + " (parent node: "+printNode.printNodeSignature( parentNode )+" - "+details.getParentXPath()+" ) -->");
 
         final String nodeText = printNode.nodeToString( xmlDomUtils.findNode( testDoc, details.getXPath() ) );
+        output.startSpan(  "ADDED <!-- xpath: " + details.getXPath() + " (parent node: "+printNode.printNodeSignature( parentNode )+" - "+details.getParentXPath()+" ) -->");
+        output.writeRaw( "+ " );
+        output.endSpan();
         output.addAddedPart( nodeText );
         output.newline();
 
@@ -113,14 +114,16 @@ public class XmlSchemaDiffReport {
     private void printDeletedNode( final Document controlDoc, final Comparison comparison ) {
         final Comparison.Detail details = comparison.getControlDetails();
         final Node parentNode = xmlDomUtils.findNode( controlDoc, details.getParentXPath() );
-        output.write( "DELETED <!-- xpath: " + details.getXPath() + " (parent node: "+printNode.printNodeSignature( parentNode )+" - "+details.getParentXPath()+" ) -->" );
+        output.startSpan(  "DELETED <!-- xpath: " + details.getXPath() + " (parent node: "+printNode.printNodeSignature( parentNode )+" - "+details.getParentXPath()+" ) -->" );
+        output.writeRaw( "- " );
+        output.endSpan();
 
         final String nodeText = printNode.nodeToString( xmlDomUtils.findNode( controlDoc, details.getXPath() ) );
         output.addRemovedPart( nodeText );
         output.newline();
 
         if( ! markNodeRemoved( details.getParentXPath(), nodeText, controlDoc ) ) {
-            output.write( "! holder for "+  details.getParentXPath() + " did not exist(?)");
+            output.write( "! (debug) holder for "+  details.getParentXPath() + " did not exist(?)");
             final String parentText = printNode.printNodeWithParentInfo( parentNode, details.getParentXPath() );
             output.writeLong( parentText );
             output.markPartRemoved( parentText, Collections.singletonList( nodeText ) );
@@ -181,11 +184,12 @@ public class XmlSchemaDiffReport {
         }
         else {
             if( comparison.getType() == ComparisonType.CHILD_NODELIST_SEQUENCE ) {
-                output.write( ". node order different: " + comparison.getTestDetails().getXPath() );
+                output.startSpan( ". node order different: " + comparison.getTestDetails().getXPath() );
+                output.writeRaw( " * " );
+                output.endSpan();
             }
             else if( comparison.getType() == ComparisonType.CHILD_NODELIST_LENGTH ) {
                 printChildNodesChanged( testDoc, controlDoc, comparison );
-
             }
             else if( comparison.getType() == ComparisonType.ATTR_NAME_LOOKUP ) {
                 printNewAttr( comparison.getTestDetails() );
@@ -204,23 +208,29 @@ public class XmlSchemaDiffReport {
         final int sizeTest = (int)comparison.getTestDetails().getValue();
         if( sizeTest > sizeControl ) {
             // nodes added
-            output.write( String.format( ". %s node(s) added: %s <!-- %s -->", sizeTest - sizeControl, printNode.printNodeSignature( comparison.getTestDetails().getTarget() ), comparison.getTestDetails().getXPath() ) );
+            output.startSpan( String.format( ". %s node(s) added: %s <!-- %s -->", sizeTest - sizeControl, printNode.printNodeSignature( comparison.getTestDetails().getTarget() ), comparison.getTestDetails().getXPath() ) );
+            output.writeRaw( " * " );
+            output.endSpan();
+
             addChangeHolder( PREFIX_OP_ADDED, comparison.getTestDetails().getXPath(), holderNodeText( testDoc, comparison.getTestDetails() ) );
         }
         else {
             // nodes removed
-            output.write( String.format( ". %s node(s) removed: %s <!-- %s -->", sizeControl - sizeTest, printNode.printNodeSignature( comparison.getTestDetails().getTarget() ), comparison.getTestDetails().getXPath() ) );
+            output.startSpan( String.format( ". %s node(s) removed: %s <!-- %s -->", sizeControl - sizeTest, printNode.printNodeSignature( comparison.getTestDetails().getTarget() ), comparison.getTestDetails().getXPath() ) );
+            output.writeRaw( " * " );
+            output.endSpan();
+
             addChangeHolder( PREFIX_OP_REMOVED, comparison.getControlDetails().getXPath(), holderNodeText( controlDoc, comparison.getControlDetails() ) );
         }
 
         if( shouldTakeParent ) {
             final String oldText = printNode.nodeToString( xmlDomUtils.findNode( controlDoc, comparison.getControlDetails().getParentXPath() ) );
             final String newText = printNode.nodeToString( xmlDomUtils.findNode( testDoc, comparison.getTestDetails().getParentXPath() ) );
-            output.write( "~" );
+            output.write( "~ daisy" );
             daisyDiff( oldText, newText, output.getHandler() );
             output.write( "~" );
 
-            output.write( "#" );
+            output.write( "# histogram" );
             patienceDiff( oldText, newText );
             output.write( "#" );
 

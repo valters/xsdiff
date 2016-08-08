@@ -44,10 +44,21 @@ public class HtmlContentOutput implements TextDiffOutput {
         try {
             consumer.startElement( "", "p", "p", noattrs() );
 
-            final char[] chars = str.toCharArray();
-            consumer.characters( chars, 0, chars.length );
+            writeRaw( str );
 
             consumer.endElement( "", "p", "p" );
+        }
+        catch( final SAXException e ) {
+            System.err.println( "Failed to write paragraph: " + str + ", exception occurred: " + e );
+            e.printStackTrace();
+        }
+    }
+
+
+    public void writeRaw( final String str ) {
+        try {
+            final char[] chars = str.toCharArray();
+            consumer.characters( chars, 0, chars.length );
         }
         catch( final SAXException e ) {
             System.err.println( "Failed to write paragraph: " + str + ", exception occurred: " + e );
@@ -197,33 +208,33 @@ public class HtmlContentOutput implements TextDiffOutput {
     public void markChanges( final String xpath, final NodeChanges changes ) {
 
         if( ! changes.getAddedNodes().isEmpty() ) {
-            write( "! <!-- adds for <!-- " + xpath + "-->");
+            write( "all adds for node (" + xpath + ")");
             markPartAdded( changes.getParentNodeNext(), changes.getAddedNodes() );
         }
         if( ! changes.getRemovedNodes().isEmpty() ) {
-            write( "! <!-- removes for <!-- " + xpath + "-->");
+            write( "all removes from node (" + xpath + ")");
             markPartRemoved( changes.getParentNodeNext(), changes.getRemovedNodes() );
         }
     }
 
 
-    public void startDiv() {
+    public void startFileHeader() {
+        startDiv( "diff-topbar" );
+    }
+
+    public void endFileHeader() {
+        endDiv();
+    }
+
+    private void startDiv( final String cssClass ) {
         try {
-            consumer.startElement( "", "div", "div", classAttr( "diff-topbar") );
+            consumer.startElement( "", "div", "div", classAttr(cssClass) );
         }
         catch( final SAXException e ) {
             System.err.println( "Failed to write div element, exception occurred: " + e );
             e.printStackTrace();
         }
     }
-
-
-    private Attributes classAttr( final String cssClass ) {
-        final AttributesImpl attrs = new AttributesImpl();
-        attrs.addAttribute("", "class", "class", "CDATA", cssClass);
-        return attrs;
-    }
-
 
     public void endDiv() {
         try {
@@ -235,5 +246,36 @@ public class HtmlContentOutput implements TextDiffOutput {
         }
     }
 
+    public void startSpan( final String title ) {
+        try {
+            consumer.startElement( "", "span", "span", titleAttr( title ) );
+        }
+        catch( final SAXException e ) {
+            System.err.println( "Failed to write div element, exception occurred: " + e );
+            e.printStackTrace();
+        }
+    }
+
+    public void endSpan() {
+        try {
+            consumer.endElement( "", "span", "span" );
+        }
+        catch( final SAXException e ) {
+            System.err.println( "Failed to write div element, exception occurred: " + e );
+            e.printStackTrace();
+        }
+    }
+
+    private Attributes classAttr( final String cssClass ) {
+        final AttributesImpl attrs = new AttributesImpl();
+        attrs.addAttribute( "", "class", "class", "CDATA", cssClass );
+        return attrs;
+    }
+
+    private Attributes titleAttr( final String title ) {
+        final AttributesImpl attrs = new AttributesImpl();
+        attrs.addAttribute( "", "title", "title", "CDATA", title );
+        return attrs;
+    }
 
 }

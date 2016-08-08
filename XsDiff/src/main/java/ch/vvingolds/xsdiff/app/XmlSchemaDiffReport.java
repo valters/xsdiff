@@ -100,7 +100,7 @@ public class XmlSchemaDiffReport {
         output.startSpan(  "ADDED <!-- xpath: " + details.getXPath() + " (parent node: "+printNode.printNodeSignature( parentNode )+" - "+details.getParentXPath()+" ) -->");
         output.writeRaw( "+ " );
         output.endSpan();
-        output.addAddedPart( nodeText );
+        output.addedPart( nodeText );
         output.newline();
 
         if( ! markNodeAdded( details.getParentXPath(), nodeText, testDoc ) ) {
@@ -119,7 +119,7 @@ public class XmlSchemaDiffReport {
         output.endSpan();
 
         final String nodeText = printNode.nodeToString( xmlDomUtils.findNode( controlDoc, details.getXPath() ) );
-        output.addRemovedPart( nodeText );
+        output.removedPart( nodeText );
         output.newline();
 
         if( ! markNodeRemoved( details.getParentXPath(), nodeText, controlDoc ) ) {
@@ -327,16 +327,16 @@ public class XmlSchemaDiffReport {
 
             while (aCur < aEnd || bCur < bEnd) {
                 if (aCur < curEdit.getBeginA() || endIdx + 1 < curIdx) {
-                    output.addClearPart( a.getString( aCur ) );
+                    output.clearPart( a.getString( aCur ) );
                     output.newline();
                     aCur++;
                     bCur++;
                 } else if (aCur < curEdit.getEndA()) {
-                    output.addRemovedPart( a.getString( aCur ) );
+                    output.removedPart( a.getString( aCur ) );
                     output.newline();
                     aCur++;
                 } else if (bCur < curEdit.getEndB()) {
-                    output.addAddedPart( b.getString( bCur ) );
+                    output.addedPart( b.getString( bCur ) );
                     output.newline();
                     bCur++;
                 }

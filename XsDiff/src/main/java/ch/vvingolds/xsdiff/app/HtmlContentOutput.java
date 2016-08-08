@@ -21,15 +21,16 @@ import java.util.function.Consumer;
 import org.ahocorasick.trie.Emit;
 import org.ahocorasick.trie.Trie;
 import org.ahocorasick.trie.Trie.TrieBuilder;
-import org.outerj.daisy.diff.output.TextDiffOutput;
 import org.outerj.daisy.diff.tag.TagSaxDiffOutput;
 import org.xml.sax.Attributes;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.AttributesImpl;
 
+import ch.vvingolds.xsdiff.format.DiffOutput;
+
 /** provides couple helpers to make html writing easier */
-public class HtmlContentOutput implements TextDiffOutput {
+public class HtmlContentOutput implements DiffOutput {
 
     private final ContentHandler consumer;
     private final TagSaxDiffOutput diffOutput;
@@ -116,7 +117,7 @@ public class HtmlContentOutput implements TextDiffOutput {
 
 
     @Override
-    public void addClearPart( final String text ) {
+    public void clearPart( final String text ) {
         try {
             diffOutput.addClearPart( text );
         }
@@ -128,7 +129,7 @@ public class HtmlContentOutput implements TextDiffOutput {
 
 
     @Override
-    public void addRemovedPart( final String text ) {
+    public void removedPart( final String text ) {
         try {
             diffOutput.addRemovedPart( text );
         }
@@ -140,7 +141,7 @@ public class HtmlContentOutput implements TextDiffOutput {
 
 
     @Override
-    public void addAddedPart( final String text ) {
+    public void addedPart( final String text ) {
         try {
             diffOutput.addAddedPart( text );
         }
@@ -162,14 +163,14 @@ public class HtmlContentOutput implements TextDiffOutput {
             int prevFragment = 0;
             for( final Emit emit : emits ) {
                 final String clearPartBefore = text.substring( prevFragment, emit.getStart() );
-                addClearPart( clearPartBefore );
-                addRemovedPart( emit.getKeyword() );
+                clearPart( clearPartBefore );
+                removedPart( emit.getKeyword() );
 
                 prevFragment = emit.getEnd()+1;
             }
 
             final String clearPartAfter = text.substring( prevFragment, text.length() );
-            addClearPart( clearPartAfter );
+            clearPart( clearPartAfter );
         }
         catch( final Exception e ) {
             System.err.println( "Failed to write removed paragraph: ["+removedParts+"] from [" + text + "], exception occurred: " + e );
@@ -189,14 +190,14 @@ public class HtmlContentOutput implements TextDiffOutput {
             int prevFragment = 0;
             for( final Emit emit : emits ) {
                 final String clearPartBefore = text.substring( prevFragment, emit.getStart() );
-                addClearPart( clearPartBefore );
-                addAddedPart( emit.getKeyword() );
+                clearPart( clearPartBefore );
+                addedPart( emit.getKeyword() );
 
                 prevFragment = emit.getEnd()+1;
             }
 
             final String clearPartAfter = text.substring( prevFragment, text.length() );
-            addClearPart( clearPartAfter );
+            clearPart( clearPartAfter );
         }
         catch( final Exception e ) {
             System.err.println( "Failed to write added paragraph: ["+addedParts+"] from [" + text + "], exception occurred: " + e );

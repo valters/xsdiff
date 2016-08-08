@@ -18,7 +18,12 @@
 <xsl:template match="/">
    <html>
       <head>
+        <title>XsDiff report</title>
+
+        <script src="js/jquery-2.2.4.min.js"></script>
+        <script src="js/jquery.tabslet.min.js"></script>
         <link href="css/diff.css" type="text/css" rel="stylesheet"/>
+        <link href="css/tabs.css" type="text/css" rel="stylesheet"/>
         <xsl:apply-templates select="diffreport/css/node()"/>
       </head>
       <body>
@@ -30,9 +35,8 @@
         <td style="text-align: center; font-size: 110%;">
             <a class="diffpage-html-a" href="#">XsDiff</a> compare report.<br/>
             DaisyDiff / HistogramDiff / XsDiff semantic diff
-        </td>
-
-        </tr></table>
+        </td></tr>
+        </table>
       </div>
          <xsl:apply-templates select="diffreport/diff/node()"/>
      </body>

@@ -29,14 +29,10 @@ public class SemanticDiffFormatter {
 
     private final Map<String, NodeChangesHolder> nodeChanges = Maps.newLinkedHashMap();
 
-    private final DiffOutput output;
+    private DiffOutput output;
 
-    public SemanticDiffFormatter( final DiffOutput output ) {
-        super();
+    public void printDiff( final DiffOutput output ) {
         this.output = output;
-    }
-
-    public void printDiff() {
         for( final Map.Entry<String, NodeChangesHolder> entry : nodeChanges.entrySet() ) {
             markChanges( entry.getKey(), entry.getValue() );
         }

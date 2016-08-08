@@ -22,6 +22,8 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.AttributesImpl;
 
+import com.google.common.base.Preconditions;
+
 import ch.vvingolds.xsdiff.format.DiffOutput;
 
 /** provides couple helpers to make html writing easier */
@@ -175,6 +177,26 @@ public class HtmlContentOutput implements DiffOutput {
         }
     }
 
+    private void el( final String el, final String... attr ) {
+        try {
+            consumer.startElement( "", el, el, attrs(attr) );
+        }
+        catch( final SAXException e ) {
+            System.err.println( "Failed to write ["+el+"] element, exception occurred: " + e );
+            e.printStackTrace();
+        }
+    }
+
+    private void _el( final String el ) {
+        try {
+            consumer.endElement( "", el, el );
+        }
+        catch( final SAXException e ) {
+            System.err.println( "Failed to write ["+el+"] element, exception occurred: " + e );
+            e.printStackTrace();
+        }
+    }
+
     public void startSpan( final String title ) {
         try {
             consumer.startElement( "", "span", "span", titleAttr( title ) );
@@ -196,15 +218,72 @@ public class HtmlContentOutput implements DiffOutput {
     }
 
     private Attributes classAttr( final String cssClass ) {
-        final AttributesImpl attrs = new AttributesImpl();
-        attrs.addAttribute( "", "class", "class", "CDATA", cssClass );
-        return attrs;
+        return attrs( "class", cssClass );
     }
 
     private Attributes titleAttr( final String title ) {
+        return attrs( "title", title );
+    }
+
+    private Attributes attrs( final String... attr) {
+        Preconditions.checkNotNull( attr );
+        Preconditions.checkArgument( 0 == attr.length % 2, "must have even number of params" );
+
         final AttributesImpl attrs = new AttributesImpl();
-        attrs.addAttribute( "", "title", "title", "CDATA", title );
+        for( int i = 0 ; i < attr.length; ) {
+            attrs.addAttribute( "", attr[i], attr[i], "CDATA", attr[i+1] );
+            i += 2;
+        }
         return attrs;
     }
 
+    /**
+            <div class="tabs" data-toggle="tabslet" data-animation="false">
+              <ul class="horizontal">
+                <li><a href="#tab-1">information</a></li>
+                <li><a href="#tab-2">tab</a></li>
+                <li><a href="#tab-3">tab</a></li>
+              </ul>
+              <div id="tab-1"><span>Just include the plugin and add the data attribute to your html tag!</span></div>
+              <div id="tab-2"><span>TAB 2</span></div>
+              <div id="tab-3"><span>TAB 3</span></div>
+            </div>
+     */
+
+    public void writeTab( final Consumer<DiffOutput> histogramOutput, final Consumer<ContentHandler> daisyOutput ) {
+        el("div", "class", "tabs", "data-toggle", "tabslet", "data-animation", "false" );
+          el( "ul", "class", "horizontal" );
+            el( "li" );
+              el( "a", "href", "#tab-1" ); writeRaw("semantic"); _el("a");
+            _el("li");
+            el( "li" );
+              el( "a", "href", "#tab-2" ); writeRaw("histogram"); _el("a");
+            _el("li");
+            el( "li" );
+              el( "a", "href", "#tab-3" ); writeRaw("daisy"); _el("a");
+            _el( "li" );
+            el( "li" );
+              el( "a", "href", "#tab-4" ); writeRaw("wikEd"); _el("a");
+            _el( "li" );
+          _el( "ul" );
+
+          el("div", "id", "tab-1" );
+            el("span"); writeRaw("semantic"); /* semanticOutput.accept( this );  */_el("span");
+          _el("div");
+
+          el("div", "id", "tab-2" );
+            histogramOutput.accept( this );
+          _el("div");
+
+          el("div", "id", "tab-3" );
+            daisyOutput.accept( consumer );
+          _el("div");
+
+          el("div", "id", "tab-4" );
+            writeRaw("wikEd");
+          _el("div");
+
+          _el("div");
+
+    }
 }

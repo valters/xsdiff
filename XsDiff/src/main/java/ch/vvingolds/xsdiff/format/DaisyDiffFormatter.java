@@ -5,14 +5,17 @@ import org.xml.sax.ContentHandler;
 
 public class DaisyDiffFormatter {
 
-    final ContentHandler resultHandler;
+    private String oldText;
+    private String newText;
 
-    public DaisyDiffFormatter( final ContentHandler resultHandler ) {
-        super();
-        this.resultHandler = resultHandler;
+    public DaisyDiffFormatter createDiff( final String oldText, final String newText ) {
+        this.oldText = oldText;
+        this.newText = newText;
+
+        return this;
     }
 
-    public void printDiff( final String oldText, final String newText ) {
+    public void printDiff( final ContentHandler resultHandler ) {
         try {
             DaisyDiff.diffTag( oldText, newText, resultHandler );
         }

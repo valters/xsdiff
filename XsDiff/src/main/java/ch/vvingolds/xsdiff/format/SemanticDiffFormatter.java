@@ -9,6 +9,7 @@ import org.ahocorasick.trie.Trie;
 import org.ahocorasick.trie.Trie.TrieBuilder;
 import org.w3c.dom.Document;
 
+import com.google.common.base.Strings;
 import com.google.common.collect.Maps;
 
 import ch.vvingolds.xsdiff.app.HtmlContentOutput;
@@ -90,7 +91,12 @@ public class SemanticDiffFormatter {
             output.addedPart( "all adds for node (" + xpath + ")");
             output.newline();
             output.newline();
-            printPartAdded( changes.getTestParentNodeNext(), changes.getAddedNodes(), output );
+            final String nodeText = changes.getTestParentNodeNext();
+            if( Strings.isNullOrEmpty( nodeText ) ) {
+                output.clearPart( "NULL TEXT" );
+            } else {
+                printPartAdded( nodeText, changes.getAddedNodes(), output );
+            }
         }
         if( ! changes.getRemovedNodes().isEmpty() ) {
             output.newline();
@@ -98,7 +104,12 @@ public class SemanticDiffFormatter {
             output.removedPart( "all removes from node (" + xpath + ")");
             output.newline();
             output.newline();
-            printPartRemoved( changes.getControlParentNodeNext(), changes.getRemovedNodes(), output );
+            final String nodeText = changes.getControlParentNodeNext();
+            if( Strings.isNullOrEmpty( nodeText ) ) {
+                output.clearPart( "NULL TEXT" );
+            } else {
+                printPartRemoved( nodeText, changes.getRemovedNodes(), output );
+            }
         }
     }
 
@@ -107,11 +118,12 @@ public class SemanticDiffFormatter {
      */
     private NodeChangesHolder getOrAddHolder( final String parentXpath, final Document parentDoc, final NodeChangesHolder.OpType opType ) {
         final NodeChangesHolder changeHolder = nodeChanges.get( parentXpath );
-        if( changeHolder != null ) {
-            return changeHolder;
+        if( changeHolder == null ) {
+            return addHolder( parentXpath, parentDoc, opType );
         }
 
-        return addHolder( parentXpath, parentDoc, opType );
+        updateHolder( changeHolder, opType, getNodeText( parentXpath, parentDoc ) );
+        return changeHolder;
     }
 
     /** check of change holder should be created, if one does not exist. verifies that the node is not located too shallow (i.e., we don't want to track stuff added under doc root) */
@@ -123,7 +135,7 @@ public class SemanticDiffFormatter {
         }
 
         // should mark anyway
-        return addChangeHolder( opType, parentXpath, getNodeText( parentXpath, parentDoc ) );
+        return updateHolder( addChangeHolder( parentXpath ), opType, getNodeText( parentXpath, parentDoc ) );
     }
 
     private String getNodeText( final String parentXpath, final Document parentDoc ) {
@@ -155,17 +167,17 @@ public class SemanticDiffFormatter {
         return true;
     }
 
-    public NodeChangesHolder addChangeHolder( final NodeChangesHolder.OpType opType, final String xpathExpr, final String nodeText ) {
-        final String key = xpathExpr;
-
+    public NodeChangesHolder addChangeHolder( final String key ) {
         NodeChangesHolder holder = nodeChanges.get( key );
         if( holder == null ) {
-            holder = new NodeChangesHolder( xpathExpr );
+            holder = new NodeChangesHolder( key );
             nodeChanges.put( key, holder );
         }
+        return holder;
+    }
 
+    public NodeChangesHolder updateHolder( final NodeChangesHolder holder, final NodeChangesHolder.OpType opType, final String nodeText ) {
         holder.addParentNodeText( opType, nodeText );
-
         return holder;
     }
 

@@ -146,8 +146,8 @@ public class XmlSchemaDiffReport {
             output.endSpan();
         }
 
-        semanticDiff.addChangeHolder( NodeChangesHolder.OpType.ADDED, comparison.getTestDetails().getXPath(), holderNodeText( testDoc, comparison.getTestDetails() ) );
-        semanticDiff.addChangeHolder( NodeChangesHolder.OpType.REMOVED, comparison.getControlDetails().getXPath(), holderNodeText( controlDoc, comparison.getControlDetails() ) );
+        semanticDiff.updateHolder( semanticDiff.addChangeHolder( comparison.getTestDetails().getXPath() ), NodeChangesHolder.OpType.ADDED, holderNodeText( testDoc, comparison.getTestDetails() ) );
+        semanticDiff.updateHolder( semanticDiff.addChangeHolder( comparison.getControlDetails().getXPath() ), NodeChangesHolder.OpType.REMOVED, holderNodeText( controlDoc, comparison.getControlDetails() ) );
 
         if( shouldTakeParent ) {
             final String oldText = printNode.nodeToString( xmlDomUtils.findNode( controlDoc, comparison.getControlDetails().getParentXPath() ) );

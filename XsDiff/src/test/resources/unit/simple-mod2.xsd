@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:testing="http://vingolds.ch/xsd/2016/testing" xmlns:xs="http://www.w3.org/2001/XMLSchema"
+    attributeFormDefault="unqualified" elementFormDefault="qualified" targetNamespace="http://vingolds.ch/xsd/2016/testing">
+
+    <xs:complexType name="Product_Type">
+        <xs:attribute default="" name="name" type="xs:string" use="optional" />
+    </xs:complexType>
+
+    <xs:element name="Product" type="testing:Product_Type" />
+
+</xs:schema>

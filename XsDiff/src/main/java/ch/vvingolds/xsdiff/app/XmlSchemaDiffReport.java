@@ -26,6 +26,7 @@ import org.xmlunit.diff.Difference;
 
 import ch.vvingolds.xsdiff.format.DaisyDiffFormatter;
 import ch.vvingolds.xsdiff.format.HistogramDiffFormatter;
+import ch.vvingolds.xsdiff.format.NodeChangesHolder;
 import ch.vvingolds.xsdiff.format.SemanticDiffFormatter;
 
 /** XML Schema (XSD) comparison/report generator */
@@ -82,11 +83,7 @@ public class XmlSchemaDiffReport {
         output.newline();
 
         if( ! semanticDiff.markNodeAdded( details.getParentXPath(), nodeText, testDoc ) ) {
-            semanticDiff.markNodeAdded( details.getXPath(), nodeText, testDoc );
-//            output.write( "! holder for "+  details.getParentXPath() + " did not exist(?)");
-//            final String parentText = printNode.printNodeWithParentInfo( parentNode, details.getParentXPath() );
-//            output.writeLong( parentText );
-//            semanticDiff.markPartAdded( parentText, Collections.singletonList( nodeText ) );
+            semanticDiff.markNodeAdded( details.getXPath(), nodeText, testDoc ); // make sure change is not lost
         }
     }
 
@@ -102,11 +99,7 @@ public class XmlSchemaDiffReport {
         output.newline();
 
         if( ! semanticDiff.markNodeRemoved( details.getParentXPath(), nodeText, controlDoc ) ) {
-            semanticDiff.markNodeRemoved( details.getXPath(), nodeText, controlDoc );
-//            output.write( "! (debug) holder for "+  details.getParentXPath() + " did not exist(?)");
-//            final String parentText = printNode.printNodeWithParentInfo( parentNode, details.getParentXPath() );
-//            output.writeLong( parentText );
-//            semanticDiff.markPartRemoved( parentText, Collections.singletonList( nodeText ) );
+            semanticDiff.markNodeRemoved( details.getXPath(), nodeText, controlDoc ); // make sure change is not lost
         }
     }
 
@@ -145,17 +138,16 @@ public class XmlSchemaDiffReport {
             output.startSpan( String.format( ". %s node(s) added: %s <!-- %s -->", sizeTest - sizeControl, printNode.printNodeSignature( comparison.getTestDetails().getTarget() ), comparison.getTestDetails().getXPath() ) );
             output.writeRaw( " * " );
             output.endSpan();
-
-            semanticDiff.addChangeHolder( semanticDiff.opAdded(), comparison.getTestDetails().getXPath(), holderNodeText( testDoc, comparison.getTestDetails() ) );
         }
         else {
             // nodes removed
             output.startSpan( String.format( ". %s node(s) removed: %s <!-- %s -->", sizeControl - sizeTest, printNode.printNodeSignature( comparison.getTestDetails().getTarget() ), comparison.getTestDetails().getXPath() ) );
             output.writeRaw( " * " );
             output.endSpan();
-
-            semanticDiff.addChangeHolder( semanticDiff.opRemoved(), comparison.getControlDetails().getXPath(), holderNodeText( controlDoc, comparison.getControlDetails() ) );
         }
+
+        semanticDiff.addChangeHolder( NodeChangesHolder.OpType.ADDED, comparison.getTestDetails().getXPath(), holderNodeText( testDoc, comparison.getTestDetails() ) );
+        semanticDiff.addChangeHolder( NodeChangesHolder.OpType.REMOVED, comparison.getControlDetails().getXPath(), holderNodeText( controlDoc, comparison.getControlDetails() ) );
 
         if( shouldTakeParent ) {
             final String oldText = printNode.nodeToString( xmlDomUtils.findNode( controlDoc, comparison.getControlDetails().getParentXPath() ) );
@@ -163,11 +155,11 @@ public class XmlSchemaDiffReport {
 
             final DaisyDiffFormatter daisyDiff = new DaisyDiffFormatter();
             daisyDiff.createDiff( oldText, newText );
-            semanticDiff.attachDaisyDiff( comparison.getTestDetails().getParentXPath(), daisyDiff );
+            semanticDiff.attachDaisyDiff( comparison.getTestDetails().getXPath(), daisyDiff );
 
             final HistogramDiffFormatter histogramDiff = new HistogramDiffFormatter();
             histogramDiff.createDiff( oldText, newText );
-            semanticDiff.attachHistogramDiff( comparison.getTestDetails().getParentXPath(), histogramDiff );
+            semanticDiff.attachHistogramDiff( comparison.getTestDetails().getXPath(), histogramDiff );
         }
     }
 

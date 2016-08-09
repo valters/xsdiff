@@ -20,7 +20,14 @@ import com.google.common.collect.Lists;
 
 public class NodeChangesHolder implements SemanticNodeChanges {
 
-    private final String parentNodeNext;
+    /** what kind of text operation happened */
+    public static enum OpType { ADDED, REMOVED };
+
+    protected final String nodeXpath;
+
+    private String controlParentNodeNext;
+
+    private String testParentNodeNext;
 
     private final List<String> addedNodeText = Lists.newArrayList();
 
@@ -30,9 +37,9 @@ public class NodeChangesHolder implements SemanticNodeChanges {
 
     private HistogramDiffFormatter histogramDiff;
 
-    public NodeChangesHolder( final String parentNodeNext ) {
+    public NodeChangesHolder( final String nodeXpath ) {
         super();
-        this.parentNodeNext = parentNodeNext;
+        this.nodeXpath = nodeXpath;
     }
 
     public void addedNode( final String nodeText ) {
@@ -43,10 +50,6 @@ public class NodeChangesHolder implements SemanticNodeChanges {
         removedNodeText.add( nodeText );
     }
 
-    @Override
-    public String getParentNodeNext() {
-        return parentNodeNext;
-    }
 
     @Override
     public List<String> getAddedNodes() {
@@ -80,6 +83,24 @@ public class NodeChangesHolder implements SemanticNodeChanges {
 
     public void setHistogramDiff( final HistogramDiffFormatter histogramDiff ) {
         this.histogramDiff = histogramDiff;
+    }
+
+    @Override
+    public String getControlParentNodeNext() {
+        return controlParentNodeNext;
+    }
+
+    @Override
+    public String getTestParentNodeNext() {
+        return testParentNodeNext;
+    }
+
+    public void addParentNodeText( final OpType op, final String nodeText ) {
+        if( op == OpType.ADDED ) {
+            this.testParentNodeNext = nodeText;
+        } else if( op == OpType.REMOVED ) {
+            this.controlParentNodeNext = nodeText;
+        }
     }
 
 }

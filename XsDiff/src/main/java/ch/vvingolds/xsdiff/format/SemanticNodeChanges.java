@@ -19,7 +19,9 @@ import java.util.List;
 /** accumulate changes done to xml node, then process them at same time */
 public interface SemanticNodeChanges {
 
-    String getParentNodeNext();
+    String getControlParentNodeNext();
+
+    String getTestParentNodeNext();
 
     List<String> getAddedNodes();
 

@@ -12,8 +12,7 @@ import org.w3c.dom.Document;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Maps;
 
-import ch.vvingolds.xsdiff.app.NodeChanges;
-import ch.vvingolds.xsdiff.app.NodeChangesHolder;
+import ch.vvingolds.xsdiff.app.HtmlContentOutput;
 import ch.vvingolds.xsdiff.app.NodeToString;
 import ch.vvingolds.xsdiff.app.XmlDomUtils;
 
@@ -29,16 +28,16 @@ public class SemanticDiffFormatter {
 
     private final Map<String, NodeChangesHolder> nodeChanges = Maps.newLinkedHashMap();
 
-    private DiffOutput output;
+    private HtmlContentOutput output;
 
-    public void printDiff( final DiffOutput output ) {
+    public void printDiff( final HtmlContentOutput output ) {
         this.output = output;
         for( final Map.Entry<String, NodeChangesHolder> entry : nodeChanges.entrySet() ) {
             markChanges( entry.getKey(), entry.getValue() );
         }
     }
 
-    public void markPartRemoved( final String text, final List<String> removedParts ) {
+    public void printPartRemoved( final String text, final List<String> removedParts, final DiffOutput output ) {
 
         final TrieBuilder trie = Trie.builder().removeOverlaps();
         for( final String part : removedParts ) {
@@ -59,7 +58,7 @@ public class SemanticDiffFormatter {
         output.clearPart( clearPartAfter );
     }
 
-    public void markPartAdded( final String text, final List<String> addedParts ) {
+    public void printPartAdded( final String text, final List<String> addedParts, final DiffOutput output ) {
         final TrieBuilder trie = Trie.builder().removeOverlaps();
         for( final String part : addedParts ) {
             trie.addKeyword(part);
@@ -80,15 +79,24 @@ public class SemanticDiffFormatter {
     }
 
 
-    public void markChanges( final String xpath, final NodeChanges changes ) {
+    public void markChanges( final String xpath, final SemanticNodeChanges changes ) {
 
+      output.writeTab( semanticOutput -> printDiff( xpath, changes, semanticOutput ),
+          histogramOutput -> changes.getHistogramDiff().printDiff( histogramOutput ),
+          daisyOutput -> changes.getDaisyDiff().printDiff( daisyOutput )
+      );
+
+    }
+
+
+    private void printDiff( final String xpath, final SemanticNodeChanges changes, final DiffOutput output ) {
         if( ! changes.getAddedNodes().isEmpty() ) {
             output.newline();
             output.newline();
             output.addedPart( "all adds for node (" + xpath + ")");
             output.newline();
             output.newline();
-            markPartAdded( changes.getParentNodeNext(), changes.getAddedNodes() );
+            printPartAdded( changes.getParentNodeNext(), changes.getAddedNodes(), output );
         }
         if( ! changes.getRemovedNodes().isEmpty() ) {
             output.newline();
@@ -96,7 +104,7 @@ public class SemanticDiffFormatter {
             output.removedPart( "all removes from node (" + xpath + ")");
             output.newline();
             output.newline();
-            markPartRemoved( changes.getParentNodeNext(), changes.getRemovedNodes() );
+            printPartRemoved( changes.getParentNodeNext(), changes.getRemovedNodes(), output );
         }
     }
 
@@ -121,7 +129,14 @@ public class SemanticDiffFormatter {
         }
 
         // should mark anyway
-        return addChangeHolder( opType, parentXpath, printNode.nodeToString( xmlDomUtils.findNode( parentDoc, parentXpath ) ) );
+        return addChangeHolder( opType, parentXpath, getNodeText( parentXpath, parentDoc ) );
+    }
+
+    private String getNodeText( final String parentXpath, final Document parentDoc ) {
+        if( parentDoc == null ) {
+            return null;
+        }
+        return printNode.nodeToString( xmlDomUtils.findNode( parentDoc, parentXpath ) );
     }
 
     /** @return false, if change could not be posted (parent holder did not exist). caller should print change explicitly. */
@@ -173,6 +188,24 @@ public class SemanticDiffFormatter {
 
     public String opRemoved() {
         return PREFIX_OP_REMOVED;
+    }
+
+    public void attachDaisyDiff( final String parentXpath, final DaisyDiffFormatter daisyDiff ) {
+        final NodeChangesHolder changeHolder = getOrAddHolder( parentXpath, null, null );
+        if( changeHolder == null ) {
+            return;
+        }
+
+        changeHolder.setDaisyDiff( daisyDiff );
+    }
+
+    public void attachHistogramDiff( final String parentXpath, final HistogramDiffFormatter histogramDiff ) {
+        final NodeChangesHolder changeHolder = getOrAddHolder( parentXpath, null, null );
+        if( changeHolder == null ) {
+            return;
+        }
+
+        changeHolder.setHistogramDiff( histogramDiff );
     }
 
 }

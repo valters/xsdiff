@@ -9,7 +9,7 @@ import org.eclipse.jgit.diff.HistogramDiff;
 import org.eclipse.jgit.diff.RawText;
 import org.eclipse.jgit.diff.RawTextComparator;
 
-public class HistogramDiffFormatter {
+public class HistogramDiffFormatter implements DiffOutputFormatter {
 
     private final DiffAlgorithm diffAlgorithm = new HistogramDiff();
     private final RawTextComparator textComparator = RawTextComparator.WS_IGNORE_ALL;
@@ -29,6 +29,7 @@ public class HistogramDiffFormatter {
         editList = diffAlgorithm.diff(textComparator, a, b );
     }
 
+    @Override
     public void printDiff( final DiffOutput output ) {
         this.output = output;
 

@@ -14,8 +14,6 @@
 
 package ch.vvingolds.xsdiff.app;
 
-import java.util.Collections;
-
 import javax.xml.namespace.QName;
 
 import org.w3c.dom.Document;
@@ -84,10 +82,11 @@ public class XmlSchemaDiffReport {
         output.newline();
 
         if( ! semanticDiff.markNodeAdded( details.getParentXPath(), nodeText, testDoc ) ) {
-            output.write( "! holder for "+  details.getParentXPath() + " did not exist(?)");
-            final String parentText = printNode.printNodeWithParentInfo( parentNode, details.getParentXPath() );
-            output.writeLong( parentText );
-            semanticDiff.markPartAdded( parentText, Collections.singletonList( nodeText ) );
+            semanticDiff.markNodeAdded( details.getXPath(), nodeText, testDoc );
+//            output.write( "! holder for "+  details.getParentXPath() + " did not exist(?)");
+//            final String parentText = printNode.printNodeWithParentInfo( parentNode, details.getParentXPath() );
+//            output.writeLong( parentText );
+//            semanticDiff.markPartAdded( parentText, Collections.singletonList( nodeText ) );
         }
     }
 
@@ -103,10 +102,11 @@ public class XmlSchemaDiffReport {
         output.newline();
 
         if( ! semanticDiff.markNodeRemoved( details.getParentXPath(), nodeText, controlDoc ) ) {
-            output.write( "! (debug) holder for "+  details.getParentXPath() + " did not exist(?)");
-            final String parentText = printNode.printNodeWithParentInfo( parentNode, details.getParentXPath() );
-            output.writeLong( parentText );
-            semanticDiff.markPartRemoved( parentText, Collections.singletonList( nodeText ) );
+            semanticDiff.markNodeRemoved( details.getXPath(), nodeText, controlDoc );
+//            output.write( "! (debug) holder for "+  details.getParentXPath() + " did not exist(?)");
+//            final String parentText = printNode.printNodeWithParentInfo( parentNode, details.getParentXPath() );
+//            output.writeLong( parentText );
+//            semanticDiff.markPartRemoved( parentText, Collections.singletonList( nodeText ) );
         }
     }
 
@@ -163,15 +163,11 @@ public class XmlSchemaDiffReport {
 
             final DaisyDiffFormatter daisyDiff = new DaisyDiffFormatter();
             daisyDiff.createDiff( oldText, newText );
+            semanticDiff.attachDaisyDiff( comparison.getTestDetails().getParentXPath(), daisyDiff );
 
             final HistogramDiffFormatter histogramDiff = new HistogramDiffFormatter();
             histogramDiff.createDiff( oldText, newText );
-
-            output.writeTab(
-                    histogramOutput -> histogramDiff.printDiff( histogramOutput ),
-                    daisyOutput -> daisyDiff.printDiff( daisyOutput )
-                    );
-
+            semanticDiff.attachHistogramDiff( comparison.getTestDetails().getParentXPath(), histogramDiff );
         }
     }
 

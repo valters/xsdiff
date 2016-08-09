@@ -63,7 +63,8 @@ public class Main {
             try {
                 //runDiff( TESTDATA_FOLDER, "subnode-remove1.xsd", TESTDATA_FOLDER, "subnode-remove2.xsd" );
                 //runDiff( TESTDATA_FOLDER, "simple-seq-len1.xsd", TESTDATA_FOLDER, "simple-seq-len2.xsd" );
-                runDiff( TESTDATA_FOLDER, "ext-remove1.xsd", TESTDATA_FOLDER, "ext-remove2.xsd" );
+                //runDiff( TESTDATA_FOLDER, "ext-remove1.xsd", TESTDATA_FOLDER, "ext-remove2.xsd" );
+                runDiff( TESTDATA_FOLDER, "simple-add1.xsd", TESTDATA_FOLDER, "simple-add2.xsd" );
                 //runDiff( TESTDATA_FOLDER+"a/", TESTDATA_FOLDER+"b/", TESTDATA_FOLDER+"files.lst" );
                 System.out.println( "done" );
             }

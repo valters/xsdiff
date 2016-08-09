@@ -3,7 +3,7 @@ package ch.vvingolds.xsdiff.format;
 import org.outerj.daisy.diff.DaisyDiff;
 import org.xml.sax.ContentHandler;
 
-public class DaisyDiffFormatter {
+public class DaisyDiffFormatter implements ContentHandlerFormatter {
 
     private String oldText;
     private String newText;
@@ -15,6 +15,7 @@ public class DaisyDiffFormatter {
         return this;
     }
 
+    @Override
     public void printDiff( final ContentHandler resultHandler ) {
         try {
             DaisyDiff.diffTag( oldText, newText, resultHandler );

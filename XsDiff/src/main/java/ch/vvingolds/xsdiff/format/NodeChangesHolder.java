@@ -12,18 +12,23 @@
   limitations under the License.
 */
 
-package ch.vvingolds.xsdiff.app;
+package ch.vvingolds.xsdiff.format;
 
 import java.util.List;
 
 import com.google.common.collect.Lists;
 
-public class NodeChangesHolder implements NodeChanges {
+public class NodeChangesHolder implements SemanticNodeChanges {
+
     private final String parentNodeNext;
 
     private final List<String> addedNodeText = Lists.newArrayList();
 
     private final List<String> removedNodeText = Lists.newArrayList();
+
+    private DaisyDiffFormatter daisyDiff;
+
+    private HistogramDiffFormatter histogramDiff;
 
     public NodeChangesHolder( final String parentNodeNext ) {
         super();
@@ -52,4 +57,29 @@ public class NodeChangesHolder implements NodeChanges {
     public List<String> getRemovedNodes() {
         return removedNodeText;
     }
+
+    @Override
+    public ContentHandlerFormatter getDaisyDiff() {
+        if( daisyDiff == null ) {
+            return new EmptyDiff();
+        }
+        return daisyDiff;
+    }
+
+    public void setDaisyDiff( final DaisyDiffFormatter daisyDiff ) {
+        this.daisyDiff = daisyDiff;
+    }
+
+    @Override
+    public DiffOutputFormatter getHistogramDiff() {
+        if( histogramDiff == null ) {
+            return new EmptyDiff();
+        }
+        return histogramDiff;
+    }
+
+    public void setHistogramDiff( final HistogramDiffFormatter histogramDiff ) {
+        this.histogramDiff = histogramDiff;
+    }
+
 }

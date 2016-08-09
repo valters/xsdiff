@@ -12,16 +12,20 @@
   limitations under the License.
 */
 
-package ch.vvingolds.xsdiff.app;
+package ch.vvingolds.xsdiff.format;
 
 import java.util.List;
 
 /** accumulate changes done to xml node, then process them at same time */
-public interface NodeChanges {
+public interface SemanticNodeChanges {
 
     String getParentNodeNext();
 
     List<String> getAddedNodes();
 
     List<String> getRemovedNodes();
+
+    DiffOutputFormatter getHistogramDiff();
+
+    ContentHandlerFormatter getDaisyDiff();
 }

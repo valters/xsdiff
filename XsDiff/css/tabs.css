@@ -1,0 +1,41 @@
+/**
+ * TABS
+ *
+ * -------------------------------------------------------------------------------------------------
+ */
+.tabs > DIV {
+    /*border-top: 1px solid #c7c7c7*/
+    margin-top: 10px;
+    background: white !important;
+    border-bottom: 1px solid #ccc;
+}
+
+.tabs UL.horizontal {
+    list-style: none outside none;
+    margin: 0;
+}
+
+.tabs LI {
+    background: white;
+    border-bottom: 4px solid #E5E5E5;
+    margin: 0 10px 0 0;
+    display: inline-block;
+}
+
+.tabs A {
+    color: #ccc;
+    display: block;
+    font-size: 18px;
+    font-weight: 300;
+    padding: 14px 24px;
+    text-decoration: none;
+}
+
+.tabs LI:hover {
+    background: #a0cac0;
+    border-bottom: 4px solid #68a697;
+}
+
+.tabs LI:hover A {
+    color: white;
+}

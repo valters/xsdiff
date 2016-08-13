@@ -37,6 +37,8 @@ public class NodeChangesHolder implements SemanticNodeChanges {
 
     private HistogramDiffFormatter histogramDiff;
 
+    private WikedDiffFormatter wikedDiff;
+
     public NodeChangesHolder( final String nodeXpath ) {
         super();
         this.nodeXpath = nodeXpath;
@@ -64,7 +66,7 @@ public class NodeChangesHolder implements SemanticNodeChanges {
     @Override
     public ContentHandlerFormatter getDaisyDiff() {
         if( daisyDiff == null ) {
-            return new EmptyDiff();
+            return EmptyDiff.INSTANCE;
         }
         return daisyDiff;
     }
@@ -76,7 +78,7 @@ public class NodeChangesHolder implements SemanticNodeChanges {
     @Override
     public DiffOutputFormatter getHistogramDiff() {
         if( histogramDiff == null ) {
-            return new EmptyDiff();
+            return EmptyDiff.INSTANCE;
         }
         return histogramDiff;
     }
@@ -101,6 +103,18 @@ public class NodeChangesHolder implements SemanticNodeChanges {
         } else if( op == OpType.REMOVED ) {
             this.controlParentNodeNext = nodeText;
         }
+    }
+
+    @Override
+    public ContentHandlerFormatter getWikedDiff() {
+        if( wikedDiff == null ) {
+            return EmptyDiff.INSTANCE;
+        }
+        return wikedDiff;
+    }
+
+    public void setWikedDiff( final WikedDiffFormatter wikedDiff ) {
+        this.wikedDiff = wikedDiff;
     }
 
 }

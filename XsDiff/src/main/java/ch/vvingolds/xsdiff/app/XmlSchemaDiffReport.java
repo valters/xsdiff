@@ -28,6 +28,7 @@ import ch.vvingolds.xsdiff.format.DaisyDiffFormatter;
 import ch.vvingolds.xsdiff.format.HistogramDiffFormatter;
 import ch.vvingolds.xsdiff.format.NodeChangesHolder;
 import ch.vvingolds.xsdiff.format.SemanticDiffFormatter;
+import ch.vvingolds.xsdiff.format.WikedDiffFormatter;
 
 /** XML Schema (XSD) comparison/report generator */
 public class XmlSchemaDiffReport {
@@ -128,38 +129,37 @@ public class XmlSchemaDiffReport {
     }
 
     public void printChildNodesChanged( final Document testDoc, final Document controlDoc, final Comparison comparison ) {
-        final long xpathDepth = XmlDomUtils.xpathDepth( comparison.getTestDetails().getXPath() );
+        final String parentNodeXpath = comparison.getTestDetails().getXPath();
+        final long xpathDepth = XmlDomUtils.xpathDepth( parentNodeXpath );
         final boolean shouldTakeParent = xpathDepth > 2;
 
         final int sizeControl = (int)comparison.getControlDetails().getValue();
         final int sizeTest = (int)comparison.getTestDetails().getValue();
         if( sizeTest > sizeControl ) {
             // nodes added
-            output.startSpan( String.format( ". %s node(s) added: %s <!-- %s -->", sizeTest - sizeControl, printNode.printNodeSignature( comparison.getTestDetails().getTarget() ), comparison.getTestDetails().getXPath() ) );
+            output.startSpan( String.format( ". %s node(s) added: %s <!-- %s -->", sizeTest - sizeControl, printNode.printNodeSignature( comparison.getTestDetails().getTarget() ), parentNodeXpath ) );
             output.writeRaw( " * " );
             output.endSpan();
         }
         else {
             // nodes removed
-            output.startSpan( String.format( ". %s node(s) removed: %s <!-- %s -->", sizeControl - sizeTest, printNode.printNodeSignature( comparison.getTestDetails().getTarget() ), comparison.getTestDetails().getXPath() ) );
+            output.startSpan( String.format( ". %s node(s) removed: %s <!-- %s -->", sizeControl - sizeTest, printNode.printNodeSignature( comparison.getTestDetails().getTarget() ), parentNodeXpath ) );
             output.writeRaw( " * " );
             output.endSpan();
         }
 
-        semanticDiff.updateHolder( semanticDiff.addChangeHolder( comparison.getTestDetails().getXPath() ), NodeChangesHolder.OpType.ADDED, holderNodeText( testDoc, comparison.getTestDetails() ) );
+        semanticDiff.updateHolder( semanticDiff.addChangeHolder( parentNodeXpath ), NodeChangesHolder.OpType.ADDED, holderNodeText( testDoc, comparison.getTestDetails() ) );
         semanticDiff.updateHolder( semanticDiff.addChangeHolder( comparison.getControlDetails().getXPath() ), NodeChangesHolder.OpType.REMOVED, holderNodeText( controlDoc, comparison.getControlDetails() ) );
 
         if( shouldTakeParent ) {
             final String oldText = printNode.nodeToString( xmlDomUtils.findNode( controlDoc, comparison.getControlDetails().getParentXPath() ) );
             final String newText = printNode.nodeToString( xmlDomUtils.findNode( testDoc, comparison.getTestDetails().getParentXPath() ) );
 
-            final DaisyDiffFormatter daisyDiff = new DaisyDiffFormatter();
-            daisyDiff.createDiff( oldText, newText );
-            semanticDiff.attachDaisyDiff( comparison.getTestDetails().getXPath(), daisyDiff );
+            semanticDiff.attachDaisyDiff( parentNodeXpath, new DaisyDiffFormatter( oldText, newText ) );
 
-            final HistogramDiffFormatter histogramDiff = new HistogramDiffFormatter();
-            histogramDiff.createDiff( oldText, newText );
-            semanticDiff.attachHistogramDiff( comparison.getTestDetails().getXPath(), histogramDiff );
+            semanticDiff.attachHistogramDiff( parentNodeXpath, new HistogramDiffFormatter( oldText, newText ) );
+
+            semanticDiff.attachWikedDiff( parentNodeXpath, new WikedDiffFormatter( oldText, newText ) );
         }
     }
 
@@ -185,7 +185,7 @@ public class XmlSchemaDiffReport {
         output.write( "+ " + newText );
 
         output.write( "~" );
-        new DaisyDiffFormatter().createDiff( oldText, newText ).printDiff( output.getHandler() );
+        new DaisyDiffFormatter( oldText, newText ).printDiff( output.getHandler() );
         output.write( "~" );
 
         final Node parentNode = xmlDomUtils.findNode( testDoc, comparison.getTestDetails().getParentXPath() );

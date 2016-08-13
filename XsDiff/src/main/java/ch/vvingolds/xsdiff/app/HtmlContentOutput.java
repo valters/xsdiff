@@ -250,8 +250,12 @@ public class HtmlContentOutput implements DiffOutput {
             </div>
      */
 
-    public void writeTab( final Consumer<DiffOutput> semanticOutput, final Consumer<DiffOutput> histogramOutput, final Consumer<ContentHandler> daisyOutput ) {
-        el("div", "class", "tabs", "data-toggle", "tabslet", "data-animation", "false" );
+    public void writeTab( final Consumer<DiffOutput> semanticOutput,
+            final Consumer<DiffOutput> histogramOutput,
+            final Consumer<ContentHandler> daisyOutput,
+            final Consumer<ContentHandler> wikedOutput ) {
+
+        el("div", "class", "tabs", "data-toggle", "tabslet", "data-animation", "true" );
           el( "ul", "class", "horizontal" );
             el( "li" );
               el( "a", "href", "#tab-1" ); writeRaw("semantic"); _el("a");
@@ -280,7 +284,7 @@ public class HtmlContentOutput implements DiffOutput {
           _el("div");
 
           el("div", "id", "tab-4" );
-            writeRaw("wikEd");
+            wikedOutput.accept( consumer );
           _el("div");
 
           _el("div");

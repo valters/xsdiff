@@ -5,14 +5,12 @@ import org.xml.sax.ContentHandler;
 
 public class DaisyDiffFormatter implements ContentHandlerFormatter {
 
-    private String oldText;
-    private String newText;
+    private final String oldText;
+    private final String newText;
 
-    public DaisyDiffFormatter createDiff( final String oldText, final String newText ) {
+    public DaisyDiffFormatter( final String oldText, final String newText ) {
         this.oldText = oldText;
         this.newText = newText;
-
-        return this;
     }
 
     @Override

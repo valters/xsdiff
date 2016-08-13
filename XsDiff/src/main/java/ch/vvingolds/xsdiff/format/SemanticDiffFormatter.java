@@ -27,10 +27,25 @@ public class SemanticDiffFormatter {
 
     public void printDiff( final HtmlContentOutput output ) {
         this.output = output;
+        printAllChanges();
+    }
+
+    private void printAllChanges() {
         for( final Map.Entry<String, NodeChangesHolder> entry : nodeChanges.entrySet() ) {
-            markChanges( entry.getKey(), entry.getValue() );
+            printChanges( entry.getKey(), entry.getValue() );
         }
     }
+
+    /** produce actual output */
+    public void printChanges( final String xpath, final SemanticNodeChanges changes ) {
+
+        output.writeTab( semanticOutput -> printDiff( xpath, changes, semanticOutput ),
+            histogramOutput -> changes.getHistogramDiff().printDiff( histogramOutput ),
+            daisyOutput -> changes.getDaisyDiff().printDiff( daisyOutput ),
+            wikedOutput -> changes.getWikedDiff().printDiff( wikedOutput )
+        );
+
+      }
 
     public void printPartRemoved( final String text, final List<String> removedParts, final DiffOutput output ) {
 
@@ -72,17 +87,6 @@ public class SemanticDiffFormatter {
         final String clearPartAfter = text.substring( prevFragment, text.length() );
         output.clearPart( clearPartAfter );
     }
-
-
-    public void markChanges( final String xpath, final SemanticNodeChanges changes ) {
-
-      output.writeTab( semanticOutput -> printDiff( xpath, changes, semanticOutput ),
-          histogramOutput -> changes.getHistogramDiff().printDiff( histogramOutput ),
-          daisyOutput -> changes.getDaisyDiff().printDiff( daisyOutput )
-      );
-
-    }
-
 
     private void printDiff( final String xpath, final SemanticNodeChanges changes, final DiffOutput output ) {
         if( ! changes.getAddedNodes().isEmpty() ) {
@@ -198,6 +202,15 @@ public class SemanticDiffFormatter {
         }
 
         changeHolder.setHistogramDiff( histogramDiff );
+    }
+
+    public void attachWikedDiff( final String parentXpath, final WikedDiffFormatter wikedDiff ) {
+        final NodeChangesHolder changeHolder = getOrAddHolder( parentXpath, null, null );
+        if( changeHolder == null ) {
+            return;
+        }
+
+        changeHolder.setWikedDiff( wikedDiff );
     }
 
 }

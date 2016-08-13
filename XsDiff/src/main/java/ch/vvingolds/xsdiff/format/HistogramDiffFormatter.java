@@ -11,6 +11,15 @@ import org.eclipse.jgit.diff.RawTextComparator;
 
 public class HistogramDiffFormatter implements DiffOutputFormatter {
 
+    private final String oldText;
+    private final String newText;
+
+    public HistogramDiffFormatter( final String oldText, final String newText ) {
+        super();
+        this.oldText = oldText;
+        this.newText = newText;
+    }
+
     private final DiffAlgorithm diffAlgorithm = new HistogramDiff();
     private final RawTextComparator textComparator = RawTextComparator.WS_IGNORE_ALL;
 
@@ -20,18 +29,14 @@ public class HistogramDiffFormatter implements DiffOutputFormatter {
     private RawText a;
     private RawText b;
 
-    private String newText;
+    @Override
+    public void printDiff( final DiffOutput output ) {
+        this.output = output;
 
-    public void createDiff( final String oldText, final String newText  ) {
         a = new RawText( oldText.getBytes() );
         b = new RawText( newText.getBytes() );
 
         editList = diffAlgorithm.diff(textComparator, a, b );
-    }
-
-    @Override
-    public void printDiff( final DiffOutput output ) {
-        this.output = output;
 
         if (editList.isEmpty()) {
             output.clearPart( newText );

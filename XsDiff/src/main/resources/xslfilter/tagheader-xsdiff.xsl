@@ -22,6 +22,8 @@
 
         <script src="js/jquery-2.2.4.min.js"></script>
         <script src="js/jquery.tabslet.min.js"></script>
+        <script src="js/base64v1_0.js"></script>
+        <script src="js/wikEd.diff.js"></script>
         <link href="css/diff.css" type="text/css" rel="stylesheet"/>
         <link href="css/tabs.css" type="text/css" rel="stylesheet"/>
         <xsl:apply-templates select="diffreport/css/node()"/>

@@ -27,7 +27,12 @@ public interface SemanticNodeChanges {
 
     List<String> getRemovedNodes();
 
+    /** produce git-style diff */
     DiffOutputFormatter getHistogramDiff();
 
+    /** produce word-style diff */
     ContentHandlerFormatter getDaisyDiff();
+
+    /** produce wikipedia style diff */
+    ContentHandlerFormatter getWikedDiff();
 }

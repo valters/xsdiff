@@ -14,6 +14,7 @@
 
 package ch.vvingolds.xsdiff.app;
 
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
 import org.outerj.daisy.diff.tag.TagSaxDiffOutput;
@@ -250,40 +251,44 @@ public class HtmlContentOutput implements DiffOutput {
             </div>
      */
 
+    private static AtomicInteger tabCounter = new AtomicInteger(1000);
+
     public void writeTab( final Consumer<DiffOutput> semanticOutput,
             final Consumer<DiffOutput> histogramOutput,
             final Consumer<ContentHandler> daisyOutput,
             final Consumer<ContentHandler> wikedOutput ) {
 
+        final String tabId = "tab-" + tabCounter.incrementAndGet();
+
         el("div", "class", "tabs", "data-toggle", "tabslet", "data-animation", "true" );
           el( "ul", "class", "horizontal" );
             el( "li" );
-              el( "a", "href", "#tab-1" ); writeRaw("semantic"); _el("a");
+              el( "a", "href", "#"+tabId+"-1" ); writeRaw("semantic"); _el("a");
             _el("li");
             el( "li" );
-              el( "a", "href", "#tab-2" ); writeRaw("histogram"); _el("a");
+              el( "a", "href", "#"+tabId+"-2" ); writeRaw("histogram"); _el("a");
             _el("li");
             el( "li" );
-              el( "a", "href", "#tab-3" ); writeRaw("daisy"); _el("a");
+              el( "a", "href", "#"+tabId+"-3" ); writeRaw("daisy"); _el("a");
             _el( "li" );
             el( "li" );
-              el( "a", "href", "#tab-4" ); writeRaw("wikEd"); _el("a");
+              el( "a", "href", "#"+tabId+"-4" ); writeRaw("wikEd"); _el("a");
             _el( "li" );
           _el( "ul" );
 
-          el("div", "id", "tab-1" );
+          el("div", "id", ""+tabId+"-1" );
             el("span"); semanticOutput.accept( this ); _el("span");
           _el("div");
 
-          el("div", "id", "tab-2" );
+          el("div", "id", ""+tabId+"-2" );
             histogramOutput.accept( this );
           _el("div");
 
-          el("div", "id", "tab-3" );
+          el("div", "id", ""+tabId+"-3" );
             daisyOutput.accept( consumer );
           _el("div");
 
-          el("div", "id", "tab-4" );
+          el("div", "id", ""+tabId+"-4" );
             wikedOutput.accept( consumer );
           _el("div");
 

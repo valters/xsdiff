@@ -158,7 +158,7 @@ var WikEdDiff = function () {
 		 * @var bool config.fullDiff
 		 *   Show complete un-clipped diff text (false)
 		 */
-		'fullDiff': false,
+		'fullDiff': true,
 
 		/**
 		 * @var bool config.showBlockMoves

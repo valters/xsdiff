@@ -80,8 +80,9 @@ public class XmlSchemaDiffReport {
         output.startSpan(  "ADDED <!-- xpath: " + details.getXPath() + " (parent node: "+printNode.printNodeSignature( parentNode )+" - "+details.getParentXPath()+" ) -->");
         output.writeRaw( "+ " );
         output.endSpan();
-        output.addedPart( nodeText );
-        output.newline();
+// don't need to output anything
+//~        output.addedPart( nodeText );
+//~        output.newline();
 
         if( ! semanticDiff.markNodeAdded( details.getParentXPath(), nodeText, testDoc ) ) {
             semanticDiff.markNodeAdded( details.getXPath(), nodeText, testDoc ); // make sure change is not lost
@@ -96,8 +97,9 @@ public class XmlSchemaDiffReport {
         output.endSpan();
 
         final String nodeText = printNode.nodeToString( xmlDomUtils.findNode( controlDoc, details.getXPath() ) );
-        output.removedPart( nodeText );
-        output.newline();
+// don't need to output anything
+//~        output.removedPart( nodeText );
+//~        output.newline();
 
         if( ! semanticDiff.markNodeRemoved( details.getParentXPath(), nodeText, controlDoc ) ) {
             semanticDiff.markNodeRemoved( details.getXPath(), nodeText, controlDoc ); // make sure change is not lost
@@ -178,9 +180,27 @@ public class XmlSchemaDiffReport {
     }
 
     private void printNodeDiff( final Document testDoc, final Comparison comparison ) {
-        output.write( "MODIFIED ; " + comparison.toString() + "\n" );
         final String oldText = printNode.nodeToString( comparison.getControlDetails().getTarget() );
         final String newText = printNode.nodeToString( comparison.getTestDetails().getTarget() );
+
+        if( comparison.getType() == ComparisonType.ATTR_VALUE ) {
+            // simple diff will do
+            new DaisyDiffFormatter( oldText, newText ).printDiff( output.getHandler() );
+            output.newline();
+            printParentInfo( testDoc, comparison.getTestDetails().getParentXPath() );
+        } else {
+            printFullNodeDiff( testDoc, comparison, oldText, newText );
+        }
+    }
+
+    private void printParentInfo( final Document testDoc, final String xpathExpr ) {
+        final Node parentNode = xmlDomUtils.findNode( testDoc, xpathExpr );
+        output.writeLong( printNode.printNodeWithParentInfo( parentNode, xpathExpr ) );
+        output.newline();
+    }
+
+    private void printFullNodeDiff( final Document testDoc, final Comparison comparison, final String oldText, final String newText ) {
+        output.write( "MODIFIED ; " + comparison.toString() + "\n" );
         output.write( "- " + oldText );
         output.write( "+ " + newText );
 
@@ -188,8 +208,7 @@ public class XmlSchemaDiffReport {
         new DaisyDiffFormatter( oldText, newText ).printDiff( output.getHandler() );
         output.write( "~" );
 
-        final Node parentNode = xmlDomUtils.findNode( testDoc, comparison.getTestDetails().getParentXPath() );
-        output.writeLong( printNode.printNodeWithParentInfo( parentNode, comparison.getTestDetails().getParentXPath() ) );
+        printParentInfo( testDoc, comparison.getTestDetails().getParentXPath() );
     }
 
 }

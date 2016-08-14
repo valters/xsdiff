@@ -266,13 +266,13 @@ public class HtmlContentOutput implements DiffOutput {
               el( "a", "href", "#"+tabId+"-1" ); writeRaw("semantic"); _el("a");
             _el("li");
             el( "li" );
+              el( "a", "href", "#"+tabId+"-4" ); writeRaw("wikEd"); _el("a");
+            _el( "li" );
+            el( "li" );
               el( "a", "href", "#"+tabId+"-2" ); writeRaw("histogram"); _el("a");
             _el("li");
             el( "li" );
               el( "a", "href", "#"+tabId+"-3" ); writeRaw("daisy"); _el("a");
-            _el( "li" );
-            el( "li" );
-              el( "a", "href", "#"+tabId+"-4" ); writeRaw("wikEd"); _el("a");
             _el( "li" );
           _el( "ul" );
 

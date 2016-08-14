@@ -34,6 +34,8 @@ import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
+import com.google.common.base.Strings;
+
 public class XmlDomUtils {
 
     /** XML namespace declaration attribute */
@@ -79,6 +81,10 @@ public class XmlDomUtils {
     }
 
     public static long xpathDepth( final String xpathExpr ) {
+        if( Strings.isNullOrEmpty( xpathExpr ) ) {
+            return 0; // nothing
+        }
+
         return countChars( xpathExpr, XPATH_DELIMITER );
     }
 
@@ -186,6 +192,17 @@ public class XmlDomUtils {
                 return;
             }
         }
+    }
+
+    /** simply get one level of xpath higher: if xpath is long enough. do not travel above 2nd level ("/a/b" node) because we don't want whole "file" as context */
+    public static String wideContext( final String xpath ) {
+        final long xpathDepth = XmlDomUtils.xpathDepth( xpath );
+        if( xpathDepth <= 2 ) {
+            return xpath; // do nothing
+        }
+
+        final int cutTo = xpath.lastIndexOf( XPATH_DELIMITER );
+        return xpath.substring( 0, cutTo );
     }
 
 }

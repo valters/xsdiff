@@ -154,8 +154,11 @@ public class XmlSchemaDiffReport {
         semanticDiff.updateHolder( semanticDiff.addChangeHolder( comparison.getControlDetails().getXPath() ), NodeChangesHolder.OpType.REMOVED, holderNodeText( controlDoc, comparison.getControlDetails() ) );
 
         if( shouldTakeParent ) {
-            final String oldText = printNode.nodeToString( xmlDomUtils.findNode( controlDoc, comparison.getControlDetails().getParentXPath() ) );
-            final String newText = printNode.nodeToString( xmlDomUtils.findNode( testDoc, comparison.getTestDetails().getParentXPath() ) );
+            final String controlParentXpath = XmlDomUtils.wideContext( comparison.getControlDetails().getParentXPath() );
+            final String testParentXpath = XmlDomUtils.wideContext( comparison.getTestDetails().getParentXPath() );
+
+            final String oldText = printNode.nodeToString( xmlDomUtils.findNode( controlDoc, controlParentXpath ) );
+            final String newText = printNode.nodeToString( xmlDomUtils.findNode( testDoc, testParentXpath ) );
 
             semanticDiff.attachDaisyDiff( parentNodeXpath, new DaisyDiffFormatter( oldText, newText ) );
 
@@ -169,7 +172,7 @@ public class XmlSchemaDiffReport {
     private String holderNodeText( final Document doc, final Detail details ) {
         final long xpathDepth = XmlDomUtils.xpathDepth( details.getXPath() );
         final boolean shouldTakeParent = xpathDepth > 2;
-        final String xpathExpr = shouldTakeParent ? details.getParentXPath() : details.getXPath();
+        final String xpathExpr = shouldTakeParent ? XmlDomUtils.wideContext( details.getParentXPath() ) : details.getXPath();
         final String nodeText = printNode.nodeToString( xmlDomUtils.findNode( doc, xpathExpr ) );
         return nodeText;
     }

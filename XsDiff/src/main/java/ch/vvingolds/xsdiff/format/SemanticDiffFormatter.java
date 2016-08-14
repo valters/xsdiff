@@ -126,7 +126,7 @@ public class SemanticDiffFormatter {
             return addHolder( parentXpath, parentDoc, opType );
         }
 
-        updateHolder( changeHolder, opType, getNodeText( parentXpath, parentDoc ) );
+        updateHolder( changeHolder, opType, getNodeText( XmlDomUtils.wideContext( parentXpath ), parentDoc ) );
         return changeHolder;
     }
 

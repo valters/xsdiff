@@ -16,6 +16,7 @@ package ch.vvingolds.xsdiff.format;
 
 import java.util.List;
 
+import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 
 public class NodeChangesHolder implements SemanticNodeChanges {
@@ -99,9 +100,13 @@ public class NodeChangesHolder implements SemanticNodeChanges {
 
     public void addParentNodeText( final OpType op, final String nodeText ) {
         if( op == OpType.ADDED ) {
-            this.testParentNodeNext = nodeText;
+            if( Strings.isNullOrEmpty( this.testParentNodeNext ) ) {
+                this.testParentNodeNext = nodeText;
+            }
         } else if( op == OpType.REMOVED ) {
-            this.controlParentNodeNext = nodeText;
+            if( Strings.isNullOrEmpty( this.controlParentNodeNext ) ) {
+                this.controlParentNodeNext = nodeText;
+            }
         }
     }
 

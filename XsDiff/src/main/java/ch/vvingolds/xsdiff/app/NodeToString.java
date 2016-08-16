@@ -88,6 +88,9 @@ public class NodeToString {
     }
 
     public String attrToString( final Node node, final QName value ) {
+        if( value == null ) {
+            return "(null)";
+        }
         if( Strings.isNullOrEmpty( value.getNamespaceURI() ) ) {
             return String.valueOf( node.getAttributes().getNamedItem( value.getLocalPart() ) );
         }

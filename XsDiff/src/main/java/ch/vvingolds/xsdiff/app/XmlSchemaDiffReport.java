@@ -51,6 +51,14 @@ public class XmlSchemaDiffReport {
         return comparison.getTestDetails().getTarget() == null;
     }
 
+    private static boolean isAttrAdded( final Comparison comparison ) {
+        return comparison.getControlDetails().getValue() == null;
+    }
+
+    private static boolean isAttrDeleted( final Comparison comparison ) {
+        return comparison.getTestDetails().getValue() == null;
+    }
+
     public void runDiff( final Document controlDoc, final Document testDoc ) {
 
         final Diff xmlDiff = new XmlSchemaDiffBuilder().compare( controlDoc, testDoc );
@@ -122,7 +130,7 @@ public class XmlSchemaDiffReport {
                 printChildNodesChanged( testDoc, controlDoc, comparison );
             }
             else if( comparison.getType() == ComparisonType.ATTR_NAME_LOOKUP ) {
-                printNewAttr( comparison.getTestDetails() );
+                printNewAttr( comparison );
             }
             else {
                 printNodeDiff( testDoc, comparison );
@@ -178,8 +186,13 @@ public class XmlSchemaDiffReport {
     }
 
     /** only info about new attr value */
-    private void printNewAttr( final Detail detail ) {
-        output.write( "MODIFIED ; new attribute [" + printNode.attrToString( detail.getTarget(), (QName)detail.getValue() ) + "] <!-- xpath: " + detail.getXPath() + " -->" );
+    private void printNewAttr( final Comparison comparison ) {
+        if( isAttrAdded( comparison ) ) {
+            output.write( "MODIFIED ; new attribute [" + printNode.attrToString( comparison.getTestDetails().getTarget(), (QName)comparison.getTestDetails().getValue() ) + "] <!-- xpath: " + comparison.getTestDetails().getXPath() + " -->" );
+        }
+        else if( isAttrDeleted( comparison ) ) {
+            output.write( "MODIFIED ; removed attribute [" + printNode.attrToString( comparison.getControlDetails().getTarget(), (QName)comparison.getControlDetails().getValue() ) + "] <!-- xpath: " + comparison.getControlDetails().getXPath() + " -->" );
+        }
     }
 
     private void printNodeDiff( final Document testDoc, final Comparison comparison ) {

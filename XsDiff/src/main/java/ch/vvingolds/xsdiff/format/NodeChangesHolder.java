@@ -15,6 +15,10 @@
 package ch.vvingolds.xsdiff.format;
 
 import java.util.List;
+import java.util.Set;
+
+import org.apache.commons.collections4.SetValuedMap;
+import org.apache.commons.collections4.multimap.HashSetValuedHashMap;
 
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
@@ -33,6 +37,10 @@ public class NodeChangesHolder implements SemanticNodeChanges {
     private final List<String> addedNodeText = Lists.newArrayList();
 
     private final List<String> removedNodeText = Lists.newArrayList();
+
+    private final SetValuedMap<String, String> addedAttrText = new HashSetValuedHashMap<>();
+
+    private final SetValuedMap<String, String> removedAttrText = new HashSetValuedHashMap<>();
 
     private DaisyDiffFormatter daisyDiff;
 
@@ -122,4 +130,41 @@ public class NodeChangesHolder implements SemanticNodeChanges {
         this.wikedDiff = wikedDiff;
     }
 
+    public void addedAttribute( final String nodeText, final String attributeText ) {
+        addedAttrText.put( nodeText, attributeText );
+    }
+
+    public void removedAttribute( final String nodeText, final String attributeText ) {
+        removedAttrText.put( nodeText, attributeText );
+    }
+
+    @Override
+    public Set<String> getNodesWithAddedAttributes() {
+        return addedAttrText.keySet();
+    }
+
+    @Override
+    public Set<String> getAddedAttributesForNode( final String nodeText ) {
+        return addedAttrText.get( nodeText );
+    }
+
+    @Override
+    public Set<String> getNodeWithRemovedAttributes() {
+        return removedAttrText.keySet();
+    }
+
+    @Override
+    public Set<String> getRemovedAttributesForNode( final String nodeText ) {
+        return removedAttrText.get( nodeText );
+    }
+
+    @Override
+    public boolean isSomethingAdded() {
+        return !addedNodeText.isEmpty() || !addedAttrText.isEmpty();
+    }
+
+    @Override
+    public boolean isSomethingRemoved() {
+        return !removedNodeText.isEmpty() || !removedAttrText.isEmpty();
+    }
 }

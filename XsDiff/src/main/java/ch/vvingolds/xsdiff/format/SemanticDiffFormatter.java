@@ -15,12 +15,14 @@
 package ch.vvingolds.xsdiff.format;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.function.Consumer;
 
 import org.ahocorasick.trie.Emit;
 import org.ahocorasick.trie.Trie;
 import org.ahocorasick.trie.Trie.TrieBuilder;
+import org.apache.commons.collections4.CollectionUtils;
 import org.w3c.dom.Document;
 
 import com.google.common.base.Strings;
@@ -64,10 +66,13 @@ public class SemanticDiffFormatter {
 
       }
 
-    public void printPartRemoved( final String text, final List<String> removedParts, final DiffOutput output ) {
+    public void printPartRemoved( final String text, final SemanticNodeChanges changes, final DiffOutput output ) {
 
         final TrieBuilder trie = Trie.builder().removeOverlaps();
-        for( final String part : removedParts ) {
+        for( final String part : changes.getRemovedNodes() ) {
+            trie.addKeyword(part);
+        }
+        for( final String part : changes.getNodeWithRemovedAttributes() ) {
             trie.addKeyword(part);
         }
         final Collection<Emit> emits = trie.build().parseText( text );
@@ -76,7 +81,15 @@ public class SemanticDiffFormatter {
         for( final Emit emit : emits ) {
             final String clearPartBefore = text.substring( prevFragment, emit.getStart() );
             output.clearPart( clearPartBefore );
-            output.removedPart( emit.getKeyword() );
+            final String nodeText = emit.getKeyword();
+            // check if we need to go deeper
+            final Set<String> attrFragments = changes.getRemovedAttributesForNode( nodeText );
+            if( CollectionUtils.isEmpty( attrFragments ) ) {
+                output.removedPart( nodeText );
+            }
+            else {
+                printAttributeHighlights( nodeText, attrFragments, fragment -> output.removedPart( fragment ) );
+            }
 
             prevFragment = emit.getEnd()+1;
         }
@@ -85,10 +98,34 @@ public class SemanticDiffFormatter {
         output.clearPart( clearPartAfter );
     }
 
-    public void printPartAdded( final String text, final List<String> addedParts, final DiffOutput output ) {
+    private void printAttributeHighlights( final String text, final Set<String> fragments, final Consumer<String> toPrint ) {
         final TrieBuilder trie = Trie.builder().removeOverlaps();
-        for( final String part : addedParts ) {
+        for( final String part : fragments ) {
             trie.addKeyword(part);
+        }
+
+        final Collection<Emit> emits = trie.build().parseText( text );
+
+        int prevFragment = 0;
+        for( final Emit emit : emits ) {
+            final String clearPartBefore = text.substring( prevFragment, emit.getStart() );
+            output.clearPart( clearPartBefore );
+            final String fragText = emit.getKeyword();
+            toPrint.accept( fragText );
+
+            prevFragment = emit.getEnd()+1;
+        }
+        final String clearPartAfter = text.substring( prevFragment, text.length() );
+        output.clearPart( clearPartAfter );
+    }
+
+    public void printPartAdded( final String text, final SemanticNodeChanges changes, final DiffOutput output ) {
+        final TrieBuilder trie = Trie.builder().removeOverlaps();
+        for( final String part : changes.getAddedNodes() ) {
+            trie.addKeyword(part);
+        }
+        for( final String part : changes.getNodesWithAddedAttributes() ) {
+            trie.addKeyword( part );
         }
         final Collection<Emit> emits = trie.build().parseText( text );
 
@@ -96,7 +133,16 @@ public class SemanticDiffFormatter {
         for( final Emit emit : emits ) {
             final String clearPartBefore = text.substring( prevFragment, emit.getStart() );
             output.clearPart( clearPartBefore );
-            output.addedPart( emit.getKeyword() );
+            final String nodeText = emit.getKeyword();
+            // check if we need to go deeper
+            final Set<String> attrFragments = changes.getAddedAttributesForNode( nodeText );
+
+            if( CollectionUtils.isEmpty( attrFragments ) ) {
+                output.addedPart( nodeText );
+            }
+            else {
+                printAttributeHighlights( nodeText, attrFragments, fragment -> output.addedPart( fragment ) );
+            }
 
             prevFragment = emit.getEnd()+1;
         }
@@ -106,7 +152,7 @@ public class SemanticDiffFormatter {
     }
 
     private void printDiff( final String xpath, final SemanticNodeChanges changes, final DiffOutput output ) {
-        if( ! changes.getAddedNodes().isEmpty() ) {
+        if( changes.isSomethingAdded() ) {
             output.newline();
             output.newline();
             output.addedPart( "all adds for node (" + xpath + ")");
@@ -116,10 +162,10 @@ public class SemanticDiffFormatter {
             if( Strings.isNullOrEmpty( nodeText ) ) {
                 output.clearPart( "NULL TEXT" );
             } else {
-                printPartAdded( nodeText, changes.getAddedNodes(), output );
+                printPartAdded( nodeText, changes, output );
             }
         }
-        if( ! changes.getRemovedNodes().isEmpty() ) {
+        if( changes.isSomethingRemoved() ) {
             output.newline();
             output.newline();
             output.removedPart( "all removes from node (" + xpath + ")");
@@ -129,7 +175,7 @@ public class SemanticDiffFormatter {
             if( Strings.isNullOrEmpty( nodeText ) ) {
                 output.clearPart( "NULL TEXT" );
             } else {
-                printPartRemoved( nodeText, changes.getRemovedNodes(), output );
+                printPartRemoved( nodeText, changes, output );
             }
         }
     }

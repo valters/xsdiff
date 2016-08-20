@@ -15,6 +15,7 @@
 package ch.vvingolds.xsdiff.format;
 
 import java.util.List;
+import java.util.Set;
 
 /** accumulate changes done to xml node, then process them at same time */
 public interface SemanticNodeChanges {
@@ -24,8 +25,12 @@ public interface SemanticNodeChanges {
     String getTestParentNodeNext();
 
     List<String> getAddedNodes();
+    Set<String> getNodesWithAddedAttributes();
+    Set<String> getAddedAttributesForNode(String nodeText);
 
     List<String> getRemovedNodes();
+    Set<String> getNodeWithRemovedAttributes();
+    Set<String> getRemovedAttributesForNode(String nodeText);
 
     /** produce git-style diff */
     DiffOutputFormatter getHistogramDiff();
@@ -35,4 +40,8 @@ public interface SemanticNodeChanges {
 
     /** produce wikipedia style diff */
     ContentHandlerFormatter getWikedDiff();
+
+    boolean isSomethingAdded();
+
+    boolean isSomethingRemoved();
 }

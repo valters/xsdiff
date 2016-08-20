@@ -127,18 +127,18 @@ public class XmlSchemaDiffReport {
                 output.endSpan();
             }
             else if( comparison.getType() == ComparisonType.CHILD_NODELIST_LENGTH ) {
-                printChildNodesChanged( testDoc, controlDoc, comparison );
+                printChildNodesChanged( comparison, controlDoc, testDoc );
             }
             else if( comparison.getType() == ComparisonType.ATTR_NAME_LOOKUP ) {
-                printNewAttr( comparison );
+                printNewAttr( comparison, controlDoc, testDoc );
             }
             else {
-                printNodeDiff( testDoc, comparison );
+                printNodeDiff( comparison, testDoc );
             }
         }
     }
 
-    public void printChildNodesChanged( final Document testDoc, final Document controlDoc, final Comparison comparison ) {
+    public void printChildNodesChanged( final Comparison comparison, final Document controlDoc, final Document testDoc ) {
         final String parentNodeXpath = comparison.getTestDetails().getXPath();
         final long xpathDepth = XmlDomUtils.xpathDepth( parentNodeXpath );
         final boolean shouldTakeParent = xpathDepth > 2;
@@ -185,17 +185,31 @@ public class XmlSchemaDiffReport {
         return nodeText;
     }
 
-    /** only info about new attr value */
-    private void printNewAttr( final Comparison comparison ) {
+    /** only info about new attr value
+     * @param controlDoc
+     * @param testDoc*/
+    private void printNewAttr( final Comparison comparison, final Document controlDoc, final Document testDoc ) {
         if( isAttrAdded( comparison ) ) {
-            output.write( "MODIFIED ; new attribute [" + printNode.attrToString( comparison.getTestDetails().getTarget(), (QName)comparison.getTestDetails().getValue() ) + "] <!-- xpath: " + comparison.getTestDetails().getXPath() + " -->" );
+            final String nodeText = printNode.nodeToString( xmlDomUtils.findNode( testDoc, comparison.getTestDetails().getParentXPath() ) );
+            final String attributeText = printNode.attrToString( comparison.getTestDetails().getTarget(), (QName)comparison.getTestDetails().getValue() );
+            output.write( "MODIFIED ; new attribute [" + attributeText + "] <!-- xpath: " + comparison.getTestDetails().getXPath() + " -->" );
+            final String parentNodeXpath = XmlDomUtils.wideContext( comparison.getTestDetails().getXPath() );
+            final NodeChangesHolder changeHolder = semanticDiff.updateHolder( semanticDiff.addChangeHolder( parentNodeXpath ), NodeChangesHolder.OpType.ADDED, holderNodeText( testDoc, comparison.getTestDetails() ) );
+            changeHolder.addedAttribute( nodeText, attributeText );
         }
         else if( isAttrDeleted( comparison ) ) {
-            output.write( "MODIFIED ; removed attribute [" + printNode.attrToString( comparison.getControlDetails().getTarget(), (QName)comparison.getControlDetails().getValue() ) + "] <!-- xpath: " + comparison.getControlDetails().getXPath() + " -->" );
+            final String nodeText = printNode.nodeToString( xmlDomUtils.findNode( controlDoc, comparison.getControlDetails().getParentXPath() ) );
+            final String attributeText = printNode.attrToString( comparison.getControlDetails().getTarget(), (QName)comparison.getControlDetails().getValue() );
+            output.write( "MODIFIED ; removed attribute [" + attributeText + "] <!-- xpath: " + comparison.getControlDetails().getXPath() + " -->" );
+            final String parentNodeXpath = XmlDomUtils.wideContext( comparison.getControlDetails().getXPath() );
+            final NodeChangesHolder changeHolder = semanticDiff.updateHolder( semanticDiff.addChangeHolder( parentNodeXpath ), NodeChangesHolder.OpType.REMOVED, holderNodeText( controlDoc, comparison.getControlDetails() ) );
+            changeHolder.removedAttribute( nodeText, attributeText );
+
         }
+
     }
 
-    private void printNodeDiff( final Document testDoc, final Comparison comparison ) {
+    private void printNodeDiff( final Comparison comparison, final Document testDoc ) {
         final String oldText = printNode.nodeToString( comparison.getControlDetails().getTarget() );
         final String newText = printNode.nodeToString( comparison.getTestDetails().getTarget() );
 
@@ -216,7 +230,7 @@ public class XmlSchemaDiffReport {
     }
 
     private void printFullNodeDiff( final Document testDoc, final Comparison comparison, final String oldText, final String newText ) {
-        output.write( "MODIFIED ; " + comparison.toString() + "\n" );
+        output.write( "NODE MODIFIED ["+comparison.getType()+"] ; " + comparison.toString() + "\n" );
         output.write( "- " + oldText );
         output.write( "+ " + newText );
 

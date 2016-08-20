@@ -195,7 +195,7 @@ public class XmlDomUtils {
     }
 
     /** simply get one level of xpath higher: if xpath is long enough. do not travel above 2nd level ("/a/b" node) because we don't want whole "file" as context */
-    public static String wideContext( final String xpath ) {
+    public static String widerContext( final String xpath ) {
         final long xpathDepth = XmlDomUtils.xpathDepth( xpath );
         if( xpathDepth <= 2 ) {
             return xpath; // do nothing
@@ -203,6 +203,17 @@ public class XmlDomUtils {
 
         final int cutTo = xpath.lastIndexOf( XPATH_DELIMITER );
         return xpath.substring( 0, cutTo );
+    }
+
+    /** return the "wide" context - get up to top level node (2 levels deep) */
+    public static String wideContext( final String xpath ) {
+        final long xpathDepth = XmlDomUtils.xpathDepth( xpath );
+        if( xpathDepth <= 2 ) {
+            return xpath; // do nothing
+        }
+
+        final int cutTo = xpath.lastIndexOf( XPATH_DELIMITER );
+        return wideContext( xpath.substring( 0, cutTo ) );
     }
 
 }

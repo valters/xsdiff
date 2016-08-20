@@ -39,6 +39,9 @@ public class XmlDomUtilsTest {
         assertThat( XmlDomUtils.wideContext( "/a/b" ), is( "/a/b"  ) );
         assertThat( XmlDomUtils.wideContext( "/a/b/c" ), is( "/a/b"  ) );
         assertThat( XmlDomUtils.wideContext( "a//b/c" ), is( "a//b"  ) );
+        assertThat( XmlDomUtils.wideContext( "a//b/c///d" ), is( "a//b"  ) );
+        assertThat( XmlDomUtils.wideContext( "a//b/c/d/e" ), is( "a//b"  ) );
+        assertThat( XmlDomUtils.wideContext( "/a/b//c//d//e" ), is( "/a/b"  ) );
     }
 
 }

@@ -36,7 +36,7 @@
 
         <td style="text-align: center; font-size: 110%;">
             <a class="diffpage-html-a" href="#">XsDiff</a> compare report.<br/>
-            DaisyDiff / HistogramDiff / XsDiff semantic diff
+            XML Semantic Diff / with WikEd Diff / Git HistogramDiff / DaisyDiff 
         </td></tr>
         </table>
       </div>

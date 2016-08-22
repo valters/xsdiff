@@ -25,7 +25,6 @@ import org.xmlunit.diff.ComparisonType;
 import org.xmlunit.diff.Diff;
 import org.xmlunit.diff.Difference;
 
-import ch.vvingolds.xsdiff.format.DaisyDiffFormatter;
 import ch.vvingolds.xsdiff.format.NodeChangesHolder;
 import ch.vvingolds.xsdiff.format.SemanticDiffFormatter;
 
@@ -228,20 +227,7 @@ public class XmlSchemaDiffReport {
         final String oldText = printNode.nodeToString( comparison.getControlDetails().getTarget() );
         final String newText = printNode.nodeToString( comparison.getTestDetails().getTarget() );
 
-        if( comparison.getType() == ComparisonType.ATTR_VALUE ) {
-            // simple diff will do
-            new DaisyDiffFormatter( oldText, newText ).printDiff( output.getHandler() );
-            output.newline();
-            printParentInfo( testDoc, comparison.getTestDetails().getParentXPath() );
-        } else {
-            printFullNodeDiff( testDoc, comparison, oldText, newText );
-        }
-    }
-
-    private void printParentInfo( final Document testDoc, final String xpathExpr ) {
-        final Node parentNode = xmlDomUtils.findNode( testDoc, xpathExpr );
-        output.writeLong( printNode.printNodeWithParentInfo( parentNode, xpathExpr ) );
-        output.newline();
+        printFullNodeDiff( testDoc, comparison, oldText, newText );
     }
 
     private void printFullNodeDiff( final Document testDoc, final Comparison comparison, final String oldText, final String newText ) {

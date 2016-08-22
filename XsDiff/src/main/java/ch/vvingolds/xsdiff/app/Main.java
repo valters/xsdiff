@@ -82,7 +82,7 @@ public class Main {
             final Path f1 = fs.getPath( folder1, file1 );
             final Path f2 = fs.getPath( folder2, file2 );
 
-            final HtmlContentOutput contentOutput = startOutput();
+            final HtmlContentOutput contentOutput = startOutput( "diff-report-"+file2+".html" );
 
             printFileComparisonHeader( contentOutput, f1, f2 );
 
@@ -99,7 +99,7 @@ public class Main {
 
             final List<String> fileList = collectLines( listFilesToCompare );
 
-            final HtmlContentOutput contentOutput = startOutput();
+            final HtmlContentOutput contentOutput = startOutput( "diff-report.html" );
 
             for( final String fileName : fileList ) {
                 System.out.println( "compare: " + fileName );
@@ -139,11 +139,10 @@ public class Main {
             content.endDocument();
         }
 
-        public HtmlContentOutput startOutput() throws Exception {
+        public HtmlContentOutput startOutput(  final String outputFile ) throws Exception {
             final SAXTransformerFactory tf = XmlDomUtils.saxTransformerFactory();
 
             final TransformerHandler result = XmlDomUtils.newFragmentTransformerHandler( tf );
-            final String outputFile = "diff-report.html";
             result.setResult(new StreamResult(new File(outputFile)));
 
             final XslFilter filter = new XslFilter();

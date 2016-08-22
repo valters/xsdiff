@@ -167,4 +167,12 @@ public class NodeChangesHolder implements SemanticNodeChanges {
     public boolean isSomethingRemoved() {
         return !removedNodeText.isEmpty() || !removedAttrText.isEmpty();
     }
+
+    public void attachAutoDiffs() {
+        this.wikedDiff = new WikedDiffFormatter( controlParentNodeNext, testParentNodeNext );
+
+        this.daisyDiff = new DaisyDiffFormatter( controlParentNodeNext, testParentNodeNext );
+
+        this.histogramDiff = new HistogramDiffFormatter( controlParentNodeNext, testParentNodeNext );
+    }
 }

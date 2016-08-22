@@ -16,6 +16,7 @@ package ch.vvingolds.xsdiff.app;
 
 import javax.xml.namespace.QName;
 
+import org.w3c.dom.Attr;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 
@@ -97,6 +98,14 @@ public class NodeToString {
         else {
             return String.valueOf( node.getAttributes().getNamedItemNS( value.getNamespaceURI(), value.getLocalPart() ) );
         }
+    }
+
+    public String attrToString( final Attr node ) {
+        if( node == null ) {
+            return "(null)";
+        }
+
+        return String.valueOf( node );
     }
 
 }

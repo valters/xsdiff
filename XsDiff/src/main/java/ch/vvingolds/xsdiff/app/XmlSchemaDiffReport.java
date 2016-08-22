@@ -91,7 +91,7 @@ public class XmlSchemaDiffReport {
 //~        output.addedPart( nodeText );
 //~        output.newline();
 
-        if( ! semanticDiff.markNodeAdded( details.getParentXPath(), nodeText, testDoc ) ) {
+        if( ! semanticDiff.markNodeAdded( XmlDomUtils.wideContext( details.getParentXPath() ), nodeText, testDoc ) ) {
             semanticDiff.markNodeAdded( details.getXPath(), nodeText, testDoc ); // make sure change is not lost
         }
     }
@@ -108,7 +108,7 @@ public class XmlSchemaDiffReport {
 //~        output.removedPart( nodeText );
 //~        output.newline();
 
-        if( ! semanticDiff.markNodeRemoved( details.getParentXPath(), nodeText, controlDoc ) ) {
+        if( ! semanticDiff.markNodeRemoved( XmlDomUtils.wideContext( details.getParentXPath() ), nodeText, controlDoc ) ) {
             semanticDiff.markNodeRemoved( details.getXPath(), nodeText, controlDoc ); // make sure change is not lost
         }
     }
@@ -141,8 +141,6 @@ public class XmlSchemaDiffReport {
 
     public void printChildNodesChanged( final Comparison comparison, final Document controlDoc, final Document testDoc ) {
         final String parentNodeXpath = comparison.getTestDetails().getXPath();
-        final long xpathDepth = XmlDomUtils.xpathDepth( parentNodeXpath );
-        final boolean shouldTakeParent = xpathDepth > 2;
 
         final int sizeControl = (int)comparison.getControlDetails().getValue();
         final int sizeTest = (int)comparison.getTestDetails().getValue();
@@ -159,24 +157,10 @@ public class XmlSchemaDiffReport {
             output.endSpan();
         }
 
-        final NodeChangesHolder changeHolder = semanticDiff.updateHolder( semanticDiff.addChangeHolder( parentNodeXpath ), NodeChangesHolder.OpType.ADDED, holderNodeText( testDoc, comparison.getTestDetails() ) );
+        final NodeChangesHolder changeHolder = semanticDiff.updateHolder( semanticDiff.addChangeHolder( XmlDomUtils.wideContext( parentNodeXpath ) ), NodeChangesHolder.OpType.ADDED, holderNodeText( testDoc, comparison.getTestDetails() ) );
         semanticDiff.updateHolder( changeHolder, NodeChangesHolder.OpType.REMOVED, holderNodeText( controlDoc, comparison.getControlDetails() ) );
         changeHolder.attachAutoDiffs();
-        semanticDiff.updateHolder( semanticDiff.addChangeHolder( comparison.getControlDetails().getXPath() ), NodeChangesHolder.OpType.REMOVED, holderNodeText( controlDoc, comparison.getControlDetails() ) );
-
-        if( shouldTakeParent ) {
-//            final String controlParentXpath = XmlDomUtils.wideContext( comparison.getControlDetails().getParentXPath() );
-//            final String testParentXpath = XmlDomUtils.wideContext( comparison.getTestDetails().getParentXPath() );
-//
-//            final String oldText = printNode.nodeToString( xmlDomUtils.findNode( controlDoc, controlParentXpath ) );
-//            final String newText = printNode.nodeToString( xmlDomUtils.findNode( testDoc, testParentXpath ) );
-//
-//            semanticDiff.attachWikedDiff( parentNodeXpath, new WikedDiffFormatter( oldText, newText ) );
-//
-//            semanticDiff.attachDaisyDiff( parentNodeXpath, new DaisyDiffFormatter( oldText, newText ) );
-//
-//            semanticDiff.attachHistogramDiff( parentNodeXpath, new HistogramDiffFormatter( oldText, newText ) );
-        }
+        semanticDiff.updateHolder( semanticDiff.addChangeHolder( XmlDomUtils.wideContext( comparison.getControlDetails().getXPath() ) ), NodeChangesHolder.OpType.REMOVED, holderNodeText( controlDoc, comparison.getControlDetails() ) );
     }
 
     /** this one is clever enough to expand node text up to parent node scope, to provide interesting context when changes are printed */

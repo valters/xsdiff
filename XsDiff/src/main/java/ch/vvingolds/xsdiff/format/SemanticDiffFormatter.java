@@ -46,6 +46,8 @@ public class SemanticDiffFormatter {
 
     public void printDiff( final HtmlContentOutput output ) {
         this.output = output;
+
+        output.write( "++ semantic adds ; removes --" );
         printAllChanges();
     }
 

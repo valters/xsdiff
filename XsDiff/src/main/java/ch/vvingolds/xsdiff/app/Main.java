@@ -99,10 +99,9 @@ public class Main {
 
             final List<String> fileList = collectLines( listFilesToCompare );
 
-            final HtmlContentOutput contentOutput = startOutput( "diff-report.html" );
-
             for( final String fileName : fileList ) {
                 System.out.println( "compare: " + fileName );
+                final HtmlContentOutput contentOutput = startOutput( "diff-report-"+fileName+".html" );
 
                 final FileSystem fs = FileSystems.getDefault();
                 final Path f1 = fs.getPath( folder1, fileName );
@@ -113,8 +112,13 @@ public class Main {
                 runDiff( Files.newBufferedReader( f1 ),
                         Files.newBufferedReader( f2 ),
                         contentOutput );
+
+                finishOutput( contentOutput );
             }
 
+        }
+
+        private void finishOutput( final HtmlContentOutput contentOutput ) throws Exception {
             finishOutput( contentOutput.getHandler() );
         }
 
@@ -139,11 +143,13 @@ public class Main {
             content.endDocument();
         }
 
-        public HtmlContentOutput startOutput(  final String outputFile ) throws Exception {
+        public HtmlContentOutput startOutput( final String outputFile ) throws Exception {
             final SAXTransformerFactory tf = XmlDomUtils.saxTransformerFactory();
 
             final TransformerHandler result = XmlDomUtils.newFragmentTransformerHandler( tf );
-            result.setResult(new StreamResult(new File(outputFile)));
+            final File folder = new File("reports");
+            folder.mkdir();
+            result.setResult(new StreamResult(new File(folder, outputFile)));
 
             final XslFilter filter = new XslFilter();
             final ContentHandler content = filter.xsl(result, HTML_TRANSFORMATION_XSL);

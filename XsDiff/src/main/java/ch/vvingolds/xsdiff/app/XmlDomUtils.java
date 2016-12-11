@@ -194,6 +194,24 @@ public class XmlDomUtils {
         }
     }
 
+    private void importAsChildNode( final Document document, final Node parentNode, final Node otherNode ) {
+        final Node newNode = document.importNode( otherNode, true );
+        setPrefixRecursive( newNode, parentNode.getPrefix() );
+        parentNode.appendChild( newNode );
+    }
+
+    public static void setPrefixRecursive( final Node node, final String prefix ) {
+
+        if( node.getNodeType() == Node.ELEMENT_NODE ) {
+            node.setPrefix( prefix );
+        }
+
+        final NodeList list = node.getChildNodes();
+        for( int i = 0; i < list.getLength(); ++i ) {
+            setPrefixRecursive( list.item( i ), prefix );
+        }
+    }
+
     /** simply get one level of xpath higher: if xpath is long enough. do not travel above 2nd level ("/a/b" node) because we don't want whole "file" as context */
     public static String widerContext( final String xpath ) {
         final long xpathDepth = XmlDomUtils.xpathDepth( xpath );

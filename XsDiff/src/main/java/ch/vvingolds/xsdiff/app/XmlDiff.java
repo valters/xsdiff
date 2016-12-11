@@ -28,6 +28,7 @@ import org.xmlunit.diff.Difference;
 import ch.vvingolds.xsdiff.format.NodeChangesHolder;
 import ch.vvingolds.xsdiff.format.SemanticDiffFormatter;
 
+/** Holds the diff-in-progress */
 public class XmlDiff {
 
     private final XmlDomUtils xmlDomUtils = new XmlDomUtils();

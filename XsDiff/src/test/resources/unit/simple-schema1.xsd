@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:testing="http://vingolds.ch/xsd/2016/testing" xmlns:xs="http://www.w3.org/2001/XMLSchema"
+    attributeFormDefault="unqualified" elementFormDefault="qualified" targetNamespace="http://vingolds.ch/xsd/2016/testing">
+
+    <xs:complexType name="PR_Type">
+        <xs:sequence>
+            <xs:element name="Pol" type="testing:P_Type" />
+        </xs:sequence>
+        <xs:attribute default="pol" name="name" type="xs:string" use="optional" />
+    </xs:complexType>
+
+    <xs:element name="product" type="testing:P_Type" />
+    <xs:simpleType name="state">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="no-change" />
+            <xs:enumeration value="created" />
+            <xs:enumeration value="updated" />
+            <xs:enumeration value="deleted" />
+        </xs:restriction>
+    </xs:simpleType>
+
+</xs:schema>

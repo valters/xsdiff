@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:testing="http://vingolds.ch/xsd/2016/testing" xmlns:xs="http://www.w3.org/2001/XMLSchema"
+    attributeFormDefault="unqualified" elementFormDefault="qualified" targetNamespace="http://vingolds.ch/xsd/2016/testing">
+
+<xs:complexType name="G_Type">
+<xs:sequence>
+<xs:element minOccurs="0" name="coverages" type="xs:string"/>
+<xs:element minOccurs="0" name="timeframe" type="xs:string"/>
+<xs:element minOccurs="0" name="sorting" type="xs:string"/>
+<xs:element minOccurs="0" name="name" type="xs:string"/>
+<xs:element minOccurs="0" name="number" type="xs:string"/>
+<xs:element minOccurs="0" name="self" type="xs:boolean"/>
+<xs:element minOccurs="0" name="member" type="testing:MemberParticipant"/>
+<xs:element minOccurs="0" name="student" type="testing:SudentParticipant"/>
+<xs:element minOccurs="0" name="employee" type="testing:EmployeeParticipant"/>
+</xs:sequence>
+<xs:attribute default="G" name="cid" type="xs:string" use="optional"/>
+<xs:attribute default="P" name="parent" type="xs:string" use="optional"/>
+<xs:attribute default="" name="name" type="xs:string" use="optional"/>
+<xs:attribute default="" name="version" type="xs:string" use="optional"/>
+</xs:complexType>
+
+</xs:schema>

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:testing="http://vingolds.ch/xsd/2016/testing" xmlns:xs="http://www.w3.org/2001/XMLSchema"
+    attributeFormDefault="unqualified" elementFormDefault="qualified" targetNamespace="http://vingolds.ch/xsd/2016/testing">
+    <xs:complexType name="PR_Type">
+        <xs:sequence>
+            <xs:element name="Pol" type="testing:P_Type" new-attr="totally new val" second-new-attr="totally new second val" />
+        </xs:sequence>
+        <xs:attribute default="gol" name="name" type="xs:double" use="optional" />
+    </xs:complexType>
+
+    <xs:complexType name="m-o-t">
+        <xs:simpleContent>
+            <xs:extension base="xs:decimal">
+                <xs:attribute name="currency" type="xs:string" use="optional" />
+            </xs:extension>
+        </xs:simpleContent>
+    </xs:complexType>
+
+</xs:schema>
+

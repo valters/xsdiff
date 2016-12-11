@@ -251,7 +251,7 @@ public class HtmlContentOutput implements DiffOutput {
             </div>
      */
 
-    private static AtomicInteger tabCounter = new AtomicInteger(1000);
+    private final AtomicInteger tabCounter = new AtomicInteger(1000);
 
     public void writeTab( final Consumer<DiffOutput> semanticOutput,
             final Consumer<DiffOutput> histogramOutput,

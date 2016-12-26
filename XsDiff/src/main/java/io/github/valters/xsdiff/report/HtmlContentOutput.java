@@ -52,12 +52,10 @@ public class HtmlContentOutput implements DiffOutput {
         this.diffOutput = new TagSaxDiffOutput( content );
     }
 
-    public static HtmlContentOutput startOutput( final String outputFile ) throws Exception {
+    public static HtmlContentOutput startOutput( final File folder, final String outputFile ) throws Exception {
         final SAXTransformerFactory tf = XmlDomUtils.saxTransformerFactory();
 
         final TransformerHandler result = XmlDomUtils.newFragmentTransformerHandler( tf );
-        final File folder = new File("reports");
-        folder.mkdir();
         result.setResult(new StreamResult(new File(folder, outputFile)));
 
         final XslFilter filter = new XslFilter();

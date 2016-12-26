@@ -15,23 +15,32 @@
 package io.github.valters.xsdiff.app;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.Reader;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.ParserConfigurationException;
 
+import org.eclipse.jgit.ignore.internal.Strings;
 import org.w3c.dom.Document;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
+import com.google.common.base.Preconditions;
+import com.google.common.io.ByteSink;
+
 import io.github.valters.xsdiff.report.HtmlContentOutput;
+import io.github.valters.xsdiff.report.HtmlRes;
 import io.github.valters.xsdiff.report.XmlDomUtils;
 import io.github.valters.xsdiff.report.XmlSchemaDiffReport;
 
@@ -74,12 +83,15 @@ public class Main {
         /** run diff on single file pair */
         public void runDiff( final String folder1, final String file1, final String folder2, final String file2 ) throws Exception {
 
+            final File report = new File("reports");
+            report.mkdir();
+            System.out.println( "output to: " + report );
 
             final FileSystem fs = FileSystems.getDefault();
             final Path f1 = fs.getPath( folder1, file1 );
             final Path f2 = fs.getPath( folder2, file2 );
 
-            final HtmlContentOutput contentOutput = HtmlContentOutput.startOutput( "diff-report-"+file2+".html" );
+            final HtmlContentOutput contentOutput = HtmlContentOutput.startOutput( report, "diff-report-"+file2+".html" );
 
             printFileComparisonHeader( contentOutput, f1, f2 );
 
@@ -94,13 +106,17 @@ public class Main {
         /** run diff on two folders, with a listing file */
         public void runDiff( final String folder1, final String folder2, final String listFilesToCompare ) throws Exception {
 
+            final File report = new File( "report-"+LocalDate.now().format( DateTimeFormatter.ISO_LOCAL_DATE ) );
+            report.mkdir();
+            System.out.println( "output: to folder '" + report + "'" );
+
             final FileSystem fs = FileSystems.getDefault();
 
             final List<String> fileList = collectLines( fs.getPath( folder2, listFilesToCompare ) );
 
             for( final String fileName : fileList ) {
                 System.out.println( "compare: " + fileName );
-                final HtmlContentOutput contentOutput = HtmlContentOutput.startOutput( "diff-report-"+fileName+".html" );
+                final HtmlContentOutput contentOutput = HtmlContentOutput.startOutput( report, "diff-report-"+fileName+".html" );
 
                 final Path f1 = fs.getPath( folder1, fileName );
                 final Path f2 = fs.getPath( folder2, fileName );
@@ -114,6 +130,26 @@ public class Main {
                 contentOutput.finishOutput();
             }
 
+            writeResources( report );
+
+        }
+
+        private void writeResources( final File report ) throws Exception {
+
+            System.out.println( "html: write "+HtmlRes.ALL_RESOURCES.length+" resources" );
+            for( final String res : HtmlRes.ALL_RESOURCES ) {
+                try( final InputStream in = Thread.currentThread().getContextClassLoader().getResourceAsStream( res ) ) {
+                    Preconditions.checkNotNull( in, "Failed to read resource %s", res );
+                    final List<String> path = Strings.split( res,  '/' );
+
+                    final File parent = new File( report, path.get( 1 ) ); // parent folder (css or js)
+                    parent.mkdir();
+                    final File out = new File( parent, path.get( 2 ) ); // file name
+
+                    final ByteSink bs = com.google.common.io.Files.asByteSink( out );
+                    bs.writeFrom( in );
+                }
+            }
         }
 
         public void printFileComparisonHeader( final HtmlContentOutput contentOutput, final Path f1, final Path f2 ) {
@@ -127,7 +163,7 @@ public class Main {
                 return br.lines().collect( Collectors.toList() );
             }
             catch( final IOException e ) {
-                throw new RuntimeException( "Failed to read listing file: " + e, e );
+                throw new RuntimeException( "Failed to read listing file "+listFilesToCompare+": " + e, e );
             }
         }
 
@@ -141,13 +177,7 @@ public class Main {
 
                 new XmlSchemaDiffReport( output ).runDiff( controlDoc, testDoc );
             }
-            catch( final ParserConfigurationException e ) {
-                throw new RuntimeException( "Failed to parse: ", e );
-            }
-            catch( final SAXException e ) {
-                throw new RuntimeException( "Failed to parse: ", e );
-            }
-            catch( final IOException e ) {
+            catch( final ParserConfigurationException| SAXException | IOException e ) {
                 throw new RuntimeException( "Failed to parse: ", e );
             }
         }

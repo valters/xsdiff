@@ -12,10 +12,9 @@
   limitations under the License.
 */
 
-package ch.vvingolds.xsdiff.app;
+package io.github.valters.xsdiff.app;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.IOException;
 import java.io.Reader;
 import java.nio.file.FileSystem;
@@ -28,44 +27,41 @@ import java.util.stream.Collectors;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.sax.SAXTransformerFactory;
-import javax.xml.transform.sax.TransformerHandler;
-import javax.xml.transform.stream.StreamResult;
 
-import org.outerj.daisy.diff.XslFilter;
 import org.w3c.dom.Document;
-import org.xml.sax.ContentHandler;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
-import org.xml.sax.helpers.AttributesImpl;
+
+import io.github.valters.xsdiff.report.HtmlContentOutput;
+import io.github.valters.xsdiff.report.XmlDomUtils;
+import io.github.valters.xsdiff.report.XmlSchemaDiffReport;
 
 /** entry point */
 public class Main {
 
-    protected static final String TESTDATA_FOLDER = "./src/test/resources/unit/";
-
     public static void main( final String[] args ) {
-        new App().run();
+        if( args.length == 2 ) {
+            new App().run( args );
+        }
+        else {
+            usage();
+        }
+    }
+
+    private static void usage() {
+        System.out.println( "Usage: xsdiff-app <folder1> <folder2>" );
+        System.out.println( "  schema.lst listing file must exist in <folder2>." );
     }
 
     /** app bootstrap */
     public static class App {
 
-        /** how to convert the xml to HTML */
-        private static final String HTML_TRANSFORMATION_XSL = "xslfilter/tagheader-xsdiff.xsl";
 
-        /** XSL looks for diffreport/diff/node() */
-        private static final String XSL_PLACEHOLDER = "diffreport";
-        /** XSL looks for diffreport/diff/node() */
-        private static final String XSL_DIFF_PLACEHOLDER = "diff";
-
-        public void run() {
+        public void run( final String[] args ) {
             try {
-                //runDiff( TESTDATA_FOLDER, "subnode-remove1.xsd", TESTDATA_FOLDER, "subnode-remove2.xsd" );
-                //runDiff( TESTDATA_FOLDER, "simple-seq-len1.xsd", TESTDATA_FOLDER, "simple-seq-len2.xsd" );
-                //runDiff( TESTDATA_FOLDER, "ext-remove1.xsd", TESTDATA_FOLDER, "ext-remove2.xsd" );
-                runDiff( TESTDATA_FOLDER, "simple-add1.xsd", TESTDATA_FOLDER, "simple-add2.xsd" );
-                //runDiff( TESTDATA_FOLDER+"a/", TESTDATA_FOLDER+"b/", TESTDATA_FOLDER+"files.lst" );
+                runDiff( args[0], args[1], args[1]+"schema.lst" );
+
+
                 System.out.println( "done" );
             }
             catch( final Exception e ) {
@@ -82,7 +78,7 @@ public class Main {
             final Path f1 = fs.getPath( folder1, file1 );
             final Path f2 = fs.getPath( folder2, file2 );
 
-            final HtmlContentOutput contentOutput = startOutput( "diff-report-"+file2+".html" );
+            final HtmlContentOutput contentOutput = HtmlContentOutput.startOutput( "diff-report-"+file2+".html" );
 
             printFileComparisonHeader( contentOutput, f1, f2 );
 
@@ -90,7 +86,7 @@ public class Main {
                     Files.newBufferedReader( f2 ),
                     contentOutput );
 
-            finishOutput( contentOutput.getHandler() );
+            contentOutput.finishOutput();
 
         }
 
@@ -101,7 +97,7 @@ public class Main {
 
             for( final String fileName : fileList ) {
                 System.out.println( "compare: " + fileName );
-                final HtmlContentOutput contentOutput = startOutput( "diff-report-"+fileName+".html" );
+                final HtmlContentOutput contentOutput = HtmlContentOutput.startOutput( "diff-report-"+fileName+".html" );
 
                 final FileSystem fs = FileSystems.getDefault();
                 final Path f1 = fs.getPath( folder1, fileName );
@@ -113,13 +109,9 @@ public class Main {
                         Files.newBufferedReader( f2 ),
                         contentOutput );
 
-                finishOutput( contentOutput );
+                contentOutput.finishOutput();
             }
 
-        }
-
-        private void finishOutput( final HtmlContentOutput contentOutput ) throws Exception {
-            finishOutput( contentOutput.getHandler() );
         }
 
         public void printFileComparisonHeader( final HtmlContentOutput contentOutput, final Path f1, final Path f2 ) {
@@ -135,31 +127,6 @@ public class Main {
             catch( final IOException e ) {
                 throw new RuntimeException( "Failed to read listing file: " + e, e );
             }
-        }
-
-        public void finishOutput( final ContentHandler content ) throws Exception {
-            content.endElement("", XSL_DIFF_PLACEHOLDER, XSL_DIFF_PLACEHOLDER);
-            content.endElement("", XSL_PLACEHOLDER, XSL_PLACEHOLDER);
-            content.endDocument();
-        }
-
-        public HtmlContentOutput startOutput( final String outputFile ) throws Exception {
-            final SAXTransformerFactory tf = XmlDomUtils.saxTransformerFactory();
-
-            final TransformerHandler result = XmlDomUtils.newFragmentTransformerHandler( tf );
-            final File folder = new File("reports");
-            folder.mkdir();
-            result.setResult(new StreamResult(new File(folder, outputFile)));
-
-            final XslFilter filter = new XslFilter();
-            final ContentHandler content = filter.xsl(result, HTML_TRANSFORMATION_XSL);
-
-            content.startDocument();
-            content.startElement("", XSL_PLACEHOLDER, XSL_PLACEHOLDER, new AttributesImpl());
-            content.startElement("", XSL_DIFF_PLACEHOLDER, XSL_DIFF_PLACEHOLDER, new AttributesImpl());
-
-            final HtmlContentOutput contentOutput = new HtmlContentOutput( content );
-            return contentOutput;
         }
 
         public void runDiff( final Reader file1, final Reader file2, final HtmlContentOutput output ) {

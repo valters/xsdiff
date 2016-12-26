@@ -21,7 +21,6 @@ import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -40,7 +39,7 @@ import io.github.valters.xsdiff.report.XmlSchemaDiffReport;
 public class Main {
 
     public static void main( final String[] args ) {
-        if( args.length == 2 ) {
+        if( args.length == 2 || args.length == 3 ) {
             new App().run( args );
         }
         else {
@@ -49,17 +48,19 @@ public class Main {
     }
 
     private static void usage() {
-        System.out.println( "Usage: xsdiff-app <folder1> <folder2>" );
+        System.out.println( "Usage: xsdiff-app <folder1> <folder2> [report-output-folder]" );
         System.out.println( "  schema.lst listing file must exist in <folder2>." );
     }
 
     /** app bootstrap */
     public static class App {
 
+        /** list of files to compare: single file name on each line */
+        private static final String LISTING_FILE = "schema.lst";
 
         public void run( final String[] args ) {
             try {
-                runDiff( args[0], args[1], args[1]+"schema.lst" );
+                runDiff( args[0], args[1], LISTING_FILE );
 
 
                 System.out.println( "done" );
@@ -93,13 +94,14 @@ public class Main {
         /** run diff on two folders, with a listing file */
         public void runDiff( final String folder1, final String folder2, final String listFilesToCompare ) throws Exception {
 
-            final List<String> fileList = collectLines( listFilesToCompare );
+            final FileSystem fs = FileSystems.getDefault();
+
+            final List<String> fileList = collectLines( fs.getPath( folder2, listFilesToCompare ) );
 
             for( final String fileName : fileList ) {
                 System.out.println( "compare: " + fileName );
                 final HtmlContentOutput contentOutput = HtmlContentOutput.startOutput( "diff-report-"+fileName+".html" );
 
-                final FileSystem fs = FileSystems.getDefault();
                 final Path f1 = fs.getPath( folder1, fileName );
                 final Path f2 = fs.getPath( folder2, fileName );
 
@@ -120,8 +122,8 @@ public class Main {
             contentOutput.endFileHeader();
         }
 
-        public List<String> collectLines( final String listFilesToCompare ) {
-            try( final BufferedReader br = Files.newBufferedReader( Paths.get( listFilesToCompare ) ) ) {
+        public List<String> collectLines( final Path listFilesToCompare ) {
+            try( final BufferedReader br = Files.newBufferedReader( listFilesToCompare ) ) {
                 return br.lines().collect( Collectors.toList() );
             }
             catch( final IOException e ) {

@@ -23,6 +23,7 @@ import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -31,7 +32,6 @@ import java.util.stream.Collectors;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.ParserConfigurationException;
 
-import org.eclipse.jgit.ignore.internal.Strings;
 import org.w3c.dom.Document;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -58,7 +58,8 @@ public class Main {
 
     private static void usage() {
         System.out.println( "Usage: xsdiff-app <folder1> <folder2> [report-output-folder]" );
-        System.out.println( "  schema.lst listing file must exist in <folder2>." );
+        System.out.println( "   or: xsdiff-app <xdf file1> <xsf file2> [report-output-folder]" );
+        System.out.println( "If comparing whole folders, a schema.lst 'listing' file must exist in <folder2>." );
     }
 
     /** app bootstrap */
@@ -67,10 +68,24 @@ public class Main {
         /** list of files to compare: single file name on each line */
         private static final String LISTING_FILE = "schema.lst";
 
+        private String reportFolder = "report-"+LocalDate.now().format( DateTimeFormatter.ISO_LOCAL_DATE );
+
         public void run( final String[] args ) {
             try {
-                runDiff( args[0], args[1], LISTING_FILE );
+                if( args.length == 3 ) {
+                    reportFolder = args[2];
+                }
 
+                Path path1 = Paths.get( args[0] );
+                Path path2 = Paths.get( args[1] );
+
+                if( path1.toFile().isDirectory() && path2.toFile().isDirectory() ) {
+                    runDiff( path1.toString(), path2.toString(), LISTING_FILE );
+                }
+
+                if( path1.toFile().isFile() && path2.toFile().isFile() ) {
+                    runDiff( path1.getParent().toString(), path1.getFileName().toString(), path2.getParent().toString(), path2.getFileName().toString() );
+                }
 
                 System.out.println( "done" );
             }
@@ -83,9 +98,9 @@ public class Main {
         /** run diff on single file pair */
         public void runDiff( final String folder1, final String file1, final String folder2, final String file2 ) throws Exception {
 
-            final File report = new File("reports");
+            final File report = new File(reportFolder);
             report.mkdir();
-            System.out.println( "output to: " + report );
+            System.out.println( "output single comparison to: " + report );
 
             final FileSystem fs = FileSystems.getDefault();
             final Path f1 = fs.getPath( folder1, file1 );
@@ -101,12 +116,13 @@ public class Main {
 
             contentOutput.finishOutput();
 
+            writeResources( report );
         }
 
         /** run diff on two folders, with a listing file */
         public void runDiff( final String folder1, final String folder2, final String listFilesToCompare ) throws Exception {
 
-            final File report = new File( "report-"+LocalDate.now().format( DateTimeFormatter.ISO_LOCAL_DATE ) );
+            final File report = new File(reportFolder);
             report.mkdir();
             System.out.println( "output: to folder '" + report + "'" );
 
@@ -140,11 +156,11 @@ public class Main {
             for( final String res : HtmlRes.ALL_RESOURCES ) {
                 try( final InputStream in = Thread.currentThread().getContextClassLoader().getResourceAsStream( res ) ) {
                     Preconditions.checkNotNull( in, "Failed to read resource %s", res );
-                    final List<String> path = Strings.split( res,  '/' );
+                    Path path = Paths.get( res );
 
-                    final File parent = new File( report, path.get( 1 ) ); // parent folder (css or js)
+                    final File parent = new File( report, path.getName( 1 ).toString() ); // parent folder (css or js)
                     parent.mkdir();
-                    final File out = new File( parent, path.get( 2 ) ); // file name
+                    final File out = new File( parent, path.getName( 2 ).toString() ); // file name
 
                     final ByteSink bs = com.google.common.io.Files.asByteSink( out );
                     bs.writeFrom( in );

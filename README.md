@@ -21,4 +21,4 @@ f1.xsd
 f2.xsd
 ~~~~
 
-`report-yyyy-MM-dd` folder will be created to hold generate html report files.
+`report-yyyy-MM-dd` folder will be created to hold the generated html report files.

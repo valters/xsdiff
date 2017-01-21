@@ -16,12 +16,12 @@ package io.github.valters.xsdiff.format;
 
 import java.util.List;
 
-import org.eclipse.jgit.diff.DiffAlgorithm;
-import org.eclipse.jgit.diff.Edit;
-import org.eclipse.jgit.diff.EditList;
-import org.eclipse.jgit.diff.HistogramDiff;
-import org.eclipse.jgit.diff.RawText;
-import org.eclipse.jgit.diff.RawTextComparator;
+import org.outerj.eclipse.jgit.diff.Edit;
+import org.outerj.eclipse.jgit.diff.EditList;
+import org.outerj.eclipse.jgit.diff.HistogramDiff;
+import org.outerj.eclipse.jgit.diff.RawText;
+import org.outerj.eclipse.jgit.diff.RawTextComparator;
+
 
 public class HistogramDiffFormatter implements DiffOutputFormatter {
 
@@ -34,7 +34,7 @@ public class HistogramDiffFormatter implements DiffOutputFormatter {
         this.newText = newText;
     }
 
-    private final DiffAlgorithm diffAlgorithm = new HistogramDiff();
+    private final HistogramDiff diffAlgorithm = new HistogramDiff();
     private final RawTextComparator textComparator = RawTextComparator.WS_IGNORE_ALL;
 
     private DiffOutput output;

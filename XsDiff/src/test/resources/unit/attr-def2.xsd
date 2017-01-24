@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:testing="http://vingolds.ch/xsd/2016/testing" xmlns:xs="http://www.w3.org/2001/XMLSchema"
+    attributeFormDefault="unqualified" elementFormDefault="qualified" targetNamespace="http://vingolds.ch/xsd/2016/testing">
+
+<xs:complexType name="P_Type">
+<xs:sequence>
+<xs:element name="Action" type="testing:Action_Type"/>
+</xs:sequence>
+<xs:attribute default="Policy" name="cid" type="xs:string" use="optional"/>
+<xs:attribute default="" name="name" type="xs:string" use="optional"/>
+<xs:attribute default="" name="version" type="xs:string" use="optional"/>
+</xs:complexType>
+
+
+</xs:schema>

@@ -21,6 +21,7 @@ import org.outerj.eclipse.jgit.diff.EditList;
 import org.outerj.eclipse.jgit.diff.HistogramDiff;
 import org.outerj.eclipse.jgit.diff.RawText;
 import org.outerj.eclipse.jgit.diff.RawTextComparator;
+import org.outerj.eclipse.jgit.util.RawParseUtils;
 
 
 public class HistogramDiffFormatter implements DiffOutputFormatter {
@@ -47,8 +48,8 @@ public class HistogramDiffFormatter implements DiffOutputFormatter {
     public void printDiff( final DiffOutput output ) {
         this.output = output;
 
-        a = new RawText( oldText.getBytes() );
-        b = new RawText( newText.getBytes() );
+        a = new RawText( oldText.getBytes(), RawParseUtils.MAP_LINES );
+        b = new RawText( newText.getBytes(), RawParseUtils.MAP_LINES );
 
         editList = diffAlgorithm.diff(textComparator, a, b );
 

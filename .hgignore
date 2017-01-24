@@ -1,8 +1,8 @@
-# default regexp syntax for excludes
-syntax: regexp
+syntax:glob
 
-# exclude files under the following directories
-/(\.svn|bin|lib|target|\.settings|\.metadata|\.clover|\.workspace|.ws|\.idea)/
+.DS_Store
 
-# exclude files with the following .extension (note, exluded files still explicitly can be added on exception case)
-\.(bak|log|iws|iml|ipr|orig|diff|bat|iml|classpath|project|springBeans|springWebflow|pmd|checkstyle|jar|zip|gz|gzip|launch)$
+target
+.classpath
+.project
+.settings

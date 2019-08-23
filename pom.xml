@@ -158,6 +158,8 @@
         <artifactId>maven-javadoc-plugin</artifactId>
         <configuration>
           <encoding>${project.build.sourceEncoding}</encoding>
+          <use>false</use>
+          <source>8</source>
         </configuration>
         <executions>
           <execution>
@@ -227,7 +229,7 @@
           <name>Valters Vingolds</name>
           <email>valters@vingolds.ch</email>
           <organization>vingolds.ch</organization>
-          <organizationUrl>http://vingolds.ch</organizationUrl>
+          <organizationUrl>https://vingolds.ch</organizationUrl>
       </developer>
   </developers>
 

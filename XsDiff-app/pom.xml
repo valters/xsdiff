@@ -1,68 +1,71 @@
 <?xml version="1.0"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-    <modelVersion>4.0.0</modelVersion>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
 
-    <parent>
-        <groupId>io.github.valters.build</groupId>
-        <artifactId>xsdiff-parent</artifactId>
-        <version>1.1.0</version>
-        <relativePath>../pom.xml</relativePath>
-    </parent>
+  <parent>
+    <groupId>io.github.valters.build</groupId>
+    <artifactId>xsdiff-parent</artifactId>
+    <version>1.2.0</version>
+    <relativePath>../pom.xml</relativePath>
+  </parent>
 
-    <groupId>io.github.valters</groupId>
-    <artifactId>xsdiff-app</artifactId>
-    <packaging>jar</packaging>
-    <name>${project.groupId}:${project.artifactId}</name>
-    <description>Self-contained executable JAR to compare XML XSD schemas providing simple and straight differences report</description>
+  <groupId>io.github.valters</groupId>
+  <artifactId>xsdiff-app</artifactId>
+  <packaging>jar</packaging>
+  <name>${project.groupId}:${project.artifactId}</name>
+  <description>Self-contained executable JAR to compare XML XSD schemas providing simple
+    and straight differences report
+  </description>
 
-    <url>http://valters.github.io/xsdiff/</url>
-    <licenses>
-        <license>
-            <name>Apache License Version 2.0, January 2004</name>
-            <url>http://www.apache.org/licenses/</url>
-        </license>
-    </licenses>
+  <url>http://valters.github.io/xsdiff/</url>
+  <licenses>
+    <license>
+      <name>Apache License Version 2.0, January 2004</name>
+      <url>http://www.apache.org/licenses/</url>
+    </license>
+  </licenses>
 
-    <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    </properties>
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+  </properties>
 
-    <dependencies>
-        <dependency>
-            <groupId>io.github.valters</groupId>
-            <artifactId>xsdiff</artifactId>
-            <version>${project.version}</version>
-        </dependency>
+  <dependencies>
+    <dependency>
+      <groupId>io.github.valters</groupId>
+      <artifactId>xsdiff</artifactId>
+      <version>${project.version}</version>
+    </dependency>
 
-    </dependencies>
+  </dependencies>
 
-    <build>
+  <build>
 
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-assembly-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>jar-with-dependencies</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>single</goal>
-                        </goals>
-                    </execution>
-                </executions>
-                <configuration>
-                    <descriptorRefs>
-                        <descriptorRef>jar-with-dependencies</descriptorRef>
-                    </descriptorRefs>
-                    <archive>
-                        <manifest>
-                            <mainClass>io.github.valters.xsdiff.app.Main</mainClass>
-                        </manifest>
-                    </archive>
-                    <appendAssemblyId>false</appendAssemblyId>
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-assembly-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>jar-with-dependencies</id>
+            <phase>package</phase>
+            <goals>
+              <goal>single</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <descriptorRefs>
+            <descriptorRef>jar-with-dependencies</descriptorRef>
+          </descriptorRefs>
+          <archive>
+            <manifest>
+              <mainClass>io.github.valters.xsdiff.app.Main</mainClass>
+            </manifest>
+          </archive>
+          <appendAssemblyId>false</appendAssemblyId>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
 </project>

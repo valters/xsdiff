@@ -102,7 +102,7 @@ public class XmlDomUtils {
 
     public static void setFactoryIndent( final TransformerFactory tf ) {
         try {
-            tf.setAttribute("indent-number", new Integer(2));
+            tf.setAttribute("indent-number", 2 );
         } catch( final IllegalArgumentException e ) {
             System.err.println( "indent-number not supported: {}"+ e.toString() ); // ignore error, don't print stack-trace
         }
@@ -158,11 +158,11 @@ public class XmlDomUtils {
      * @param node the starting node.
      */
     public static Node removeNamespaceRecursive( final Node node, final Document document ) {
-        Node newNode = null;
 
-        if( node.getNodeType() == Node.ELEMENT_NODE ) {
-            newNode = document.renameNode( node, null, removeNsPrefix( node.getNodeName() ) );
+        if(node.getNodeType() != Node.ELEMENT_NODE) {
+            return node; // do nothing
         }
+        Node newNode = document.renameNode( node, null, removeNsPrefix( node.getNodeName() ) );
 
         final NodeList list = node.getChildNodes();
         for( int i = 0; i < list.getLength(); ++i ) {
@@ -176,7 +176,7 @@ public class XmlDomUtils {
     public static String removeNsPrefix( final String nodeName ) {
         final int colonAt = nodeName.indexOf( NAMESPACE_PREFIX );
         if( colonAt >= 0 ) {
-            return nodeName.substring( colonAt+1, nodeName.length() );
+            return nodeName.substring( colonAt+1 );
         }
 
         return nodeName;
@@ -185,6 +185,9 @@ public class XmlDomUtils {
     /** remove stray "xmlns" default namespace element that seems to get left over even after removing namespacing from nodes */
     public static void removeXmlNsAttribute( final Node node ) {
         final NamedNodeMap attr = node.getAttributes();
+        if(attr == null) {
+            return; // text nodes don't have attributes
+        }
         for( int i = 0; i < attr.getLength(); i++ ) {
             final Node item = attr.item( i );
             if( ATTR_XMLNS.equals( item.getNodeName() ) ) {

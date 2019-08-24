@@ -28,6 +28,13 @@
 
   <dependencyManagement>
     <dependencies>
+
+      <dependency>
+        <groupId>io.github.valters</groupId>
+        <artifactId>xsdiff</artifactId>
+        <version>1.2.0</version>
+      </dependency>
+
       <dependency>
         <groupId>junit</groupId>
         <artifactId>junit</artifactId>

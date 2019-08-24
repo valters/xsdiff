@@ -34,7 +34,6 @@
     <dependency>
       <groupId>io.github.valters</groupId>
       <artifactId>xsdiff</artifactId>
-      <version>${project.version}</version>
     </dependency>
 
   </dependencies>

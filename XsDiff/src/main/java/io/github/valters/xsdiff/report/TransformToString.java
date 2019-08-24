@@ -24,6 +24,7 @@ import javax.xml.transform.TransformerFactoryConfigurationError;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
+import com.google.common.base.Preconditions;
 import org.w3c.dom.Attr;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
@@ -73,7 +74,14 @@ public class TransformToString {
         final Node newNode = doc.importNode( node, true );
         final Node cleanNode = XmlDomUtils.removeNamespaceRecursive( newNode, doc );
         XmlDomUtils.removeXmlNsAttribute( cleanNode );
-        doc.appendChild( cleanNode );
+        if(cleanNode.getNodeType() != Node.ELEMENT_NODE) {
+            // special case for text
+            Node parent = doc.appendChild( doc.createElement( "parent"  ) );
+            parent.appendChild( cleanNode );
+        }
+        else {
+            doc.appendChild( cleanNode );
+        }
         return doc;
     }
 

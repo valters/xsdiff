@@ -27,7 +27,7 @@ public class NodeToString {
 
     private final TransformToString transform = new TransformToString();
 
-    /** remove all possible (invisible) whitespace: including line breaks. used to see if document is actually empty and alternative printer should be used. */
+    /** Remove all possible (invisible) whitespace: including line breaks. used to see if document is actually empty and the alternative printer should be used. */
     public String trim( final String str ) {
         return CharMatcher.invisible().trimFrom( Strings.nullToEmpty( str ) );
     }
@@ -42,7 +42,7 @@ public class NodeToString {
 
     /** simple print when clever fails */
     private String altPrint( final Node node ) {
-        return "<span>"+String.valueOf( node )+"</span>";
+        return "<span>" + node + "</span>";
     }
 
     private String printAttributes( final NamedNodeMap attributes ) {

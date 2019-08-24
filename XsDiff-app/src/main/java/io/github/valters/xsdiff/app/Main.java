@@ -25,6 +25,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -58,7 +59,7 @@ public class Main {
 
     private static void usage() {
         System.out.println( "Usage: xsdiff-app <folder1> <folder2> [report-output-folder]" );
-        System.out.println( "   or: xsdiff-app <xsf file1> <xsf file2> [report-output-folder]" );
+        System.out.println( "   or: xsdiff-app <file1.xsd> <file2.xsd> [report-output-folder]" );
         System.out.println( "When comparing whole folders, a schema.lst 'listing' file must exist in <folder2>." );
     }
 
@@ -67,8 +68,9 @@ public class Main {
 
         /** list of files to compare: single file name on each line */
         private static final String LISTING_FILE = "schema.lst";
+        private static final DateTimeFormatter MINUTESTAMP = DateTimeFormatter.ofPattern( "HHmm" );
 
-        private String reportFolder = "report-" + LocalDate.now().format( DateTimeFormatter.ISO_LOCAL_DATE );
+        private String reportFolder = "report-" + LocalDate.now().format( DateTimeFormatter.ISO_LOCAL_DATE ) + "-" + LocalTime.now().format( MINUTESTAMP );
 
         void run( final String[] args ) {
             try {
@@ -99,7 +101,7 @@ public class Main {
         void runDiff( final String folder1, final String file1, final String folder2, final String file2 ) throws Exception {
 
             final File report = new File( reportFolder );
-            Preconditions.checkState( report.mkdir(), "Error, failed to create %s", report );
+            Preconditions.checkState( report.mkdir(), "Error, failed to create folder '%s'", report );
             System.out.println( "output single file [" + file1 + "/" + file2 + "] comparison to: " + report );
 
             final FileSystem fs = FileSystems.getDefault();
@@ -123,7 +125,7 @@ public class Main {
         void runDiff( final String folder1, final String folder2, final String listFilesToCompare ) throws Exception {
 
             final File report = new File( reportFolder );
-            Preconditions.checkState( report.mkdir(), "Error, failed to create %s", report );
+            Preconditions.checkState( report.mkdir(), "Error, failed to create folder '%s'", report );
             System.out.println( "output: to folder '" + report + "'" );
 
             final FileSystem fs = FileSystems.getDefault();
@@ -159,7 +161,9 @@ public class Main {
                     Path path = Paths.get( res );
 
                     final File parent = new File( report, path.getName( 1 ).toString() ); // parent folder (css or js)
-                    Preconditions.checkState(parent.mkdir(),"Error, failed to create %s", parent );
+                    if(!parent.exists()) {
+                        Preconditions.checkState( parent.mkdir(), "Error, failed to create folder '%s'", parent );
+                    }
                     final File out = new File( parent, path.getName( 2 ).toString() ); // file name
 
                     final ByteSink bs = com.google.common.io.Files.asByteSink( out );

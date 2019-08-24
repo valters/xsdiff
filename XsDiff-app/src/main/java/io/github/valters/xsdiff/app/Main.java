@@ -58,19 +58,19 @@ public class Main {
 
     private static void usage() {
         System.out.println( "Usage: xsdiff-app <folder1> <folder2> [report-output-folder]" );
-        System.out.println( "   or: xsdiff-app <xdf file1> <xsf file2> [report-output-folder]" );
-        System.out.println( "If comparing whole folders, a schema.lst 'listing' file must exist in <folder2>." );
+        System.out.println( "   or: xsdiff-app <xsf file1> <xsf file2> [report-output-folder]" );
+        System.out.println( "When comparing whole folders, a schema.lst 'listing' file must exist in <folder2>." );
     }
 
     /** app bootstrap */
-    public static class App {
+    static class App {
 
         /** list of files to compare: single file name on each line */
         private static final String LISTING_FILE = "schema.lst";
 
-        private String reportFolder = "report-"+LocalDate.now().format( DateTimeFormatter.ISO_LOCAL_DATE );
+        private String reportFolder = "report-" + LocalDate.now().format( DateTimeFormatter.ISO_LOCAL_DATE );
 
-        public void run( final String[] args ) {
+        void run( final String[] args ) {
             try {
                 if( args.length == 3 ) {
                     reportFolder = args[2];
@@ -90,23 +90,23 @@ public class Main {
                 System.out.println( "done" );
             }
             catch( final Exception e ) {
-                System.out.println("Error, failed to run, exception occurred: " + e );
+                System.out.println( "Error, failed to run, exception occurred: " + e );
                 e.printStackTrace();
             }
         }
 
         /** run diff on single file pair */
-        public void runDiff( final String folder1, final String file1, final String folder2, final String file2 ) throws Exception {
+        void runDiff( final String folder1, final String file1, final String folder2, final String file2 ) throws Exception {
 
-            final File report = new File(reportFolder);
-            report.mkdir();
-            System.out.println( "output single comparison to: " + report );
+            final File report = new File( reportFolder );
+            Preconditions.checkState( report.mkdir(), "Error, failed to create %s", report );
+            System.out.println( "output single file [" + file1 + "/" + file2 + "] comparison to: " + report );
 
             final FileSystem fs = FileSystems.getDefault();
             final Path f1 = fs.getPath( folder1, file1 );
             final Path f2 = fs.getPath( folder2, file2 );
 
-            final HtmlContentOutput contentOutput = HtmlContentOutput.startOutput( report, "diff-report-"+file2+".html" );
+            final HtmlContentOutput contentOutput = HtmlContentOutput.startOutput( report, "diff-report-" + file2 + ".html" );
 
             printFileComparisonHeader( contentOutput, f1, f2 );
 
@@ -120,10 +120,10 @@ public class Main {
         }
 
         /** run diff on two folders, with a listing file */
-        public void runDiff( final String folder1, final String folder2, final String listFilesToCompare ) throws Exception {
+        void runDiff( final String folder1, final String folder2, final String listFilesToCompare ) throws Exception {
 
-            final File report = new File(reportFolder);
-            report.mkdir();
+            final File report = new File( reportFolder );
+            Preconditions.checkState( report.mkdir(), "Error, failed to create %s", report );
             System.out.println( "output: to folder '" + report + "'" );
 
             final FileSystem fs = FileSystems.getDefault();
@@ -132,7 +132,7 @@ public class Main {
 
             for( final String fileName : fileList ) {
                 System.out.println( "compare: " + fileName );
-                final HtmlContentOutput contentOutput = HtmlContentOutput.startOutput( report, "diff-report-"+fileName+".html" );
+                final HtmlContentOutput contentOutput = HtmlContentOutput.startOutput( report, "diff-report-" + fileName + ".html" );
 
                 final Path f1 = fs.getPath( folder1, fileName );
                 final Path f2 = fs.getPath( folder2, fileName );
@@ -152,14 +152,14 @@ public class Main {
 
         private void writeResources( final File report ) throws Exception {
 
-            System.out.println( "html: write "+HtmlRes.ALL_RESOURCES.length+" resources" );
+            System.out.println( "html: write " + HtmlRes.ALL_RESOURCES.length + " resources" );
             for( final String res : HtmlRes.ALL_RESOURCES ) {
                 try( final InputStream in = Thread.currentThread().getContextClassLoader().getResourceAsStream( res ) ) {
                     Preconditions.checkNotNull( in, "Failed to read resource %s", res );
                     Path path = Paths.get( res );
 
                     final File parent = new File( report, path.getName( 1 ).toString() ); // parent folder (css or js)
-                    parent.mkdir();
+                    Preconditions.checkState(parent.mkdir(),"Error, failed to create %s", parent );
                     final File out = new File( parent, path.getName( 2 ).toString() ); // file name
 
                     final ByteSink bs = com.google.common.io.Files.asByteSink( out );
@@ -168,22 +168,22 @@ public class Main {
             }
         }
 
-        public void printFileComparisonHeader( final HtmlContentOutput contentOutput, final Path f1, final Path f2 ) {
+        void printFileComparisonHeader( final HtmlContentOutput contentOutput, final Path f1, final Path f2 ) {
             contentOutput.startFileHeader();
-            contentOutput.write( "comparing: "+f1+" with "+f2 );
+            contentOutput.write( "comparing: " + f1 + " with " + f2 );
             contentOutput.endFileHeader();
         }
 
-        public List<String> collectLines( final Path listFilesToCompare ) {
+        List<String> collectLines( final Path listFilesToCompare ) {
             try( final BufferedReader br = Files.newBufferedReader( listFilesToCompare ) ) {
                 return br.lines().collect( Collectors.toList() );
             }
             catch( final IOException e ) {
-                throw new RuntimeException( "Failed to read listing file "+listFilesToCompare+": " + e, e );
+                throw new RuntimeException( "Failed to read listing file " + listFilesToCompare + ": " + e, e );
             }
         }
 
-        public void runDiff( final Reader file1, final Reader file2, final HtmlContentOutput output ) {
+        void runDiff( final Reader file1, final Reader file2, final HtmlContentOutput output ) {
 
             try {
 
@@ -193,7 +193,7 @@ public class Main {
 
                 new XmlSchemaDiffReport( output ).runDiff( controlDoc, testDoc );
             }
-            catch( final ParserConfigurationException| SAXException | IOException e ) {
+            catch( final ParserConfigurationException | SAXException | IOException e ) {
                 throw new RuntimeException( "Failed to parse: ", e );
             }
         }

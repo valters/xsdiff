@@ -78,15 +78,15 @@ public class Main {
                     reportFolder = args[2];
                 }
 
-                Path path1 = Paths.get( args[0] );
-                Path path2 = Paths.get( args[1] );
+                File f1 = Paths.get( args[0] ).toFile();
+                File f2 = Paths.get( args[1] ).toFile();
 
-                if( path1.toFile().isDirectory() && path2.toFile().isDirectory() ) {
-                    runDiff( path1.toString(), path2.toString(), LISTING_FILE );
+                if( f1.isDirectory() && f2.isDirectory() ) {
+                    runDiff( f1.toPath(), f2.toPath(), LISTING_FILE );
                 }
 
-                if( path1.toFile().isFile() && path2.toFile().isFile() ) {
-                    runDiff( path1.getParent().toString(), path1.getFileName().toString(), path2.getParent().toString(), path2.getFileName().toString() );
+                if( f1.isFile() && f2.isFile() ) {
+                    runDiff( f1, f2 );
                 }
 
                 System.out.println( "done" );
@@ -98,17 +98,16 @@ public class Main {
         }
 
         /** run diff on single file pair */
-        void runDiff( final String folder1, final String file1, final String folder2, final String file2 ) throws Exception {
+        void runDiff( final File file1, final File file2 ) throws Exception {
 
             final File report = new File( reportFolder );
             Preconditions.checkState( report.mkdir(), "Error, failed to create folder '%s'", report );
             System.out.println( "output single file [" + file1 + "/" + file2 + "] comparison to: " + report );
 
-            final FileSystem fs = FileSystems.getDefault();
-            final Path f1 = fs.getPath( folder1, file1 );
-            final Path f2 = fs.getPath( folder2, file2 );
+            final Path f1 = file1.toPath();
+            final Path f2 = file2.toPath();
 
-            final HtmlContentOutput contentOutput = HtmlContentOutput.startOutput( report, "diff-report-" + file2 + ".html" );
+            final HtmlContentOutput contentOutput = HtmlContentOutput.startOutput( report, "diff-report-" + file2.getName() + ".html" );
 
             printFileComparisonHeader( contentOutput, f1, f2 );
 
@@ -122,22 +121,20 @@ public class Main {
         }
 
         /** run diff on two folders, with a listing file */
-        void runDiff( final String folder1, final String folder2, final String listFilesToCompare ) throws Exception {
+        void runDiff( final Path folder1, final Path folder2, final String listFilesToCompare ) throws Exception {
 
             final File report = new File( reportFolder );
             Preconditions.checkState( report.mkdir(), "Error, failed to create folder '%s'", report );
             System.out.println( "output: to folder '" + report + "'" );
 
-            final FileSystem fs = FileSystems.getDefault();
-
-            final List<String> fileList = collectLines( fs.getPath( folder2, listFilesToCompare ) );
+            final List<String> fileList = collectLines( folder2.resolve( listFilesToCompare ) );
 
             for( final String fileName : fileList ) {
                 System.out.println( "compare: " + fileName );
                 final HtmlContentOutput contentOutput = HtmlContentOutput.startOutput( report, "diff-report-" + fileName + ".html" );
 
-                final Path f1 = fs.getPath( folder1, fileName );
-                final Path f2 = fs.getPath( folder2, fileName );
+                final Path f1 = folder1.resolve( fileName );
+                final Path f2 = folder2.resolve( fileName );
 
                 printFileComparisonHeader( contentOutput, f1, f2 );
 
@@ -161,7 +158,7 @@ public class Main {
                     Path path = Paths.get( res );
 
                     final File parent = new File( report, path.getName( 1 ).toString() ); // parent folder (css or js)
-                    if(!parent.exists()) {
+                    if( !parent.exists() ) {
                         Preconditions.checkState( parent.mkdir(), "Error, failed to create folder '%s'", parent );
                     }
                     final File out = new File( parent, path.getName( 2 ).toString() ); // file name

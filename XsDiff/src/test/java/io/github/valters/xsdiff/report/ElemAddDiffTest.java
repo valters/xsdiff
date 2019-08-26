@@ -68,6 +68,16 @@ public class ElemAddDiffTest {
         new XmlSchemaDiffReport( HtmlContentOutput.startOutput( out, "diff-report-schema.html" ) ).runDiff( controlDoc, testDoc  );
     }
 
+    @Test
+    public void shouldCompareDocumentationNode() throws Exception {
+        final Document controlDoc = docBuilder.parse( testFile( "simple-annotation1.xsd" ) );
+        final Document testDoc = docBuilder.parse( testFile( "simple-annotation2.xsd" ) );
+
+        HtmlContentOutput output = HtmlContentOutput.startOutput( out, "diff-report-anno-doc.html" );
+        new XmlSchemaDiffReport( output ).runDiff( controlDoc, testDoc );
+        output.finishOutput();
+    }
+
     private InputSource testFile( final String fileName ) throws IOException {
         return new InputSource( Files.newBufferedReader( fs.getPath( TESTDATA_FOLDER, fileName  ) ) );
     }
